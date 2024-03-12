@@ -10,7 +10,7 @@ import {
   fetchRecommendedMovies,
   fetchMovieImages,
   fetchMovieVideos,
-} from "../../api";
+} from "../../pages/api";
 import { Header } from "../../components/Header";
 import { MovieItem } from "../../components/MovieItem";
 import { useHeaderContext } from "../../contexts/headerContext";

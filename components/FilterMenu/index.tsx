@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchMovieGenres } from "../../api";
+import { fetchMovieGenres } from "../../pages/api";
 import { CheckIcon, CircleMenuHorizontal } from "../Icons";
 import { Dropdown } from "../Dropdown";
 import { SingleSlider } from "../SingleSlider";

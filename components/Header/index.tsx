@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
-import { multiSearch } from "../../api";
+import { multiSearch } from "../../pages/api";
 import { signIn, useSession } from "next-auth/react";
 import { Transition } from "@headlessui/react";
 import { UserMenu } from "../UserMenu";

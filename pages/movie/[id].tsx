@@ -7,7 +7,7 @@ import {
   fetchRecommendedMovies,
   fetchMovieImages,
   fetchMovieVideos,
-} from "../../api";
+} from "../api";
 import { SideMenu } from "../../components/SideMenu";
 
 import { Movie } from "../../features/Movie";

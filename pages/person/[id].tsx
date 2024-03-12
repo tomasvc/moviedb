@@ -4,7 +4,7 @@ import {
   fetchPersonDetails,
   fetchPersonExternals,
   fetchPersonCombinedCredits,
-} from "../../api";
+} from "../api";
 import { Header } from "../../components/Header";
 import { ItemPopup } from "../../components/ItemPopup";
 import { SideMenu } from "../../components/SideMenu";

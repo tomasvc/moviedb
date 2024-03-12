@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { fetchMovies, fetchMovieGenres, fetchMovieVideos } from "../api";
+import { fetchMovies, fetchMovieGenres, fetchMovieVideos } from "./api";
 import { MovieItem } from "../components/MovieItem";
 import { Header } from "../components/Header";
 import { useHeaderContext } from "../contexts/headerContext";
