@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Header } from '../../components/Header'
 import { useHeaderContext } from '../../contexts/headerContext'
-import { fetchItemsByKeyword, fetchKeyword } from '../../api'
+import { fetchItemsByKeyword, fetchKeyword } from '../api'
 import { useRouter } from 'next/router'
 import moment from 'moment'
 import clsx from 'clsx'
