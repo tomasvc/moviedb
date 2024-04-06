@@ -69,7 +69,6 @@ export default function Movie({ movie, credits, reviews, keywords, similar }) {
           model: "gpt-4-0125-preview",
         })
         .then((response) => {
-          console.log(response);
           setAwards(response.choices[0].message.content.toLowerCase());
         });
     }

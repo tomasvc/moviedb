@@ -116,7 +116,6 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
   }, [output]);
 
   useEffect(() => {
-    console.log(parsedOutput);
     const fetchData = async () => {
       if (
         Object.keys(parsedOutput).some((key) => parsedOutput[key].length > 0)
@@ -139,7 +138,6 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
         if (item.results[0]?.gender) {
           people.push(item.results[0]!);
         } else {
-          console.log(item);
           item.results[0] && movies.push(item.results[0]);
         }
       });
@@ -151,10 +149,6 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
       setLoading(false);
     });
   }, [parsedOutput]);
-
-  useEffect(() => {
-    console.log(results);
-  }, [results]);
 
   useEffect(() => {
     if (open) {
@@ -180,7 +174,6 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
         model: "gpt-3.5-turbo-0125",
       })
       .then((response) => {
-        console.log(response);
         setOutput(response?.choices[0]?.message?.content);
       });
   }

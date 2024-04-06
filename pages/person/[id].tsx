@@ -46,7 +46,6 @@ export default function PersonPage() {
       setPerson(data);
       setExternals(externals);
       setImages(images.profiles);
-      console.log(images);
 
       const sortedCast = credits?.cast.sort((a: any, b: any) => {
         if (a.release_date === undefined && a.first_air_date === undefined)
@@ -175,10 +174,10 @@ export default function PersonPage() {
                       return (
                         <div
                           key={index}
-                          className="w-full h-full shadow-lg overflow-hidden object-cover"
+                          className="w-full h-full shadow-lg overflow-hidden"
                         >
                           <img
-                            className="shadow-lg w-full h-full"
+                            className="shadow-lg w-full h-full object-cover"
                             src={`https://image.tmdb.org/t/p/w400${item.file_path}`}
                           />
                         </div>
