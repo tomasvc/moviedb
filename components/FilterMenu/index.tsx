@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchMovieGenres } from "../../pages/api";
+import { fetchMovieGenres } from "../../api";
 import { CheckIcon, CircleMenuHorizontal } from "../Icons";
 import { Dropdown } from "../Dropdown";
 import { SingleSlider } from "../SingleSlider";
@@ -107,7 +107,7 @@ export const FilterMenu: React.FC<{
               })}
           </ul>
 
-          <div>
+          {/* <div>
             <label
               htmlFor="ratings"
               className="text-gray-100 tracking-wide uppercase text-xs px-5"
@@ -132,7 +132,7 @@ export const FilterMenu: React.FC<{
                 setValue={setVoteCount}
               />
             </div>
-          </div>
+          </div> */}
 
           <div>
             <label

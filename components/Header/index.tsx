@@ -1,13 +1,24 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
-import { multiSearch } from "../../pages/api";
+import { movieSearch, personSearch } from "../../api";
 import { signIn, useSession } from "next-auth/react";
 import { Transition } from "@headlessui/react";
 import { UserMenu } from "../UserMenu";
+import { MovieItem } from "../MovieItem";
 import { useOnClickOutside } from "../../hooks/useOnClickOutside";
 import { SearchIcon } from "../Icons";
+import { debounce } from "lodash";
+import { CircularProgress } from "@mui/material";
+import Image from "next/image";
+import Link from "next/link";
 import clsx from "clsx";
 import moment from "moment";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true,
+});
 
 const UserIcon = () => {
   return (
@@ -28,6 +39,25 @@ const UserIcon = () => {
   );
 };
 
+const WarningIcon = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="w-6 h-6 text-slate-100/60"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+      />
+    </svg>
+  );
+};
+
 type HeaderProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -36,11 +66,19 @@ type HeaderProps = {
 
 export const Header = ({ open, setOpen }: HeaderProps) => {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any>(null);
-  const [scrolled, setScrolled] = useState(false);
+  const [output, setOutput] = useState("");
+  const [parsedOutput, setParsedOutput] = useState({
+    movies: [],
+    people: [],
+  });
+  const [results, setResults] = useState<any>({
+    movies: [],
+    people: [],
+  });
   const [openMenu, setOpenMenu] = useState(false);
+  const [displayResultsWindow, setDisplayResultsWindow] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
   const { data } = useSession();
 
   const wrapperRef = useRef(null);
@@ -51,12 +89,72 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
   }, []);
 
   useEffect(() => {
-    async function fetchResults() {
-      const data = await multiSearch(query);
-      setResults(data.results);
+    // async function fetchResults() {
+    //   const data = await multiSearch(query);
+    //   setResults(data.results);
+    // }
+    // fetchResults();
+
+    setResults({
+      movies: [],
+      people: [],
+    });
+
+    if (query.length > 0) {
+      setDisplayResultsWindow(true);
+      setLoading(true);
+      searchQuery(query);
+    } else {
+      setDisplayResultsWindow(false);
     }
-    fetchResults();
   }, [query]);
+
+  useEffect(() => {
+    if (output.length > 0) {
+      parseOutput(output);
+    }
+  }, [output]);
+
+  useEffect(() => {
+    console.log(parsedOutput);
+    const fetchData = async () => {
+      if (
+        Object.keys(parsedOutput).some((key) => parsedOutput[key].length > 0)
+      ) {
+        const promises = [
+          ...parsedOutput.movies.map((m) => movieSearch(m)),
+          ...parsedOutput.people.map((p) => personSearch(p)),
+        ];
+
+        const data = await Promise.all(promises);
+        return data.filter((result) => result !== null);
+      }
+    };
+
+    fetchData().then((data) => {
+      let movies = [];
+      let people = [];
+
+      data?.forEach((item) => {
+        if (item.results[0]?.gender) {
+          people.push(item.results[0]!);
+        } else {
+          console.log(item);
+          item.results[0] && movies.push(item.results[0]);
+        }
+      });
+
+      setResults({
+        movies,
+        people,
+      });
+      setLoading(false);
+    });
+  }, [parsedOutput]);
+
+  useEffect(() => {
+    console.log(results);
+  }, [results]);
 
   useEffect(() => {
     if (open) {
@@ -70,31 +168,58 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
     };
   }, [open]);
 
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  async function searchQuery(query: string) {
+    const chatCompletion = await openai.chat.completions
+      .create({
+        messages: [
+          {
+            role: "user",
+            content: `Classify and structure the following query: '${query}'. Based on the query, return a list with these three sections if it is suitable for the query: movie titles, people (either cast, crew or both) and movie genres. Provide only the results without any additional text. Provide at least 10 items per list if you can. Try not not to include any innacurate information. Do not add any descriptions. If you cannot find anything based on the query, or if the provided query makes no sense, simply respond with 'Could not find any information with the provided query'.`,
+          },
+        ],
+        model: "gpt-3.5-turbo-0125",
+      })
+      .then((response) => {
+        console.log(response);
+        setOutput(response?.choices[0]?.message?.content);
+      });
+  }
 
-  const handleScroll = () => {
-    const offset = window.scrollY;
-    if (offset > 50) {
-      setScrolled(true);
-    } else {
-      setScrolled(false);
-    }
-  };
+  function parseOutput(str: string) {
+    const normalizedStr = str.replace(/- /g, "").trim();
 
-  const handleClick = (id: string, media_type: string) => {
-    setOpen(false);
-    if (media_type === "movie") {
-      router.push(`/movie/${id}`);
-    }
-    if (media_type === "person") {
-      router.push(`/person/${id}`);
-    }
-  };
+    // Split the string into sections
+    const sections = normalizedStr.split("\n\n").reduce((acc, section) => {
+      const titleEndIndex = section.indexOf(":");
+      let title = section
+        .substring(0, titleEndIndex)
+        .replace(/\s+/g, "_")
+        .toLowerCase(); // Normalize titles to be consistent with the keys
+
+      title = title.replace("(", "").replace(")", "").replace("-", "_");
+
+      const content = section
+        .substring(titleEndIndex + 1)
+        .trim()
+        .split("\n")
+        .map((line) =>
+          line
+            .replace(/^\s*\d+\.\s*/, "") // Remove numeric prefixes if present
+            .replace(/^\s*-\s*/, "") // Remove dash prefixes if present
+            .replace(/\*/g, "") // Remove asterisks within content
+            .replace(/\s*\([^)]*\)/, "") // Remove parentheses with content
+            .trim()
+        );
+      acc[title] = content;
+      return acc;
+    }, {});
+
+    const movies = sections["movie_titles"] || [];
+    const people = sections["people"] || [];
+    const genres = sections["movie_genres"] || [];
+
+    setParsedOutput({ movies: Array.from(new Set(movies)), people });
+  }
 
   const handleAccountClick = () => {
     if (data?.user) {
@@ -104,28 +229,31 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
     }
   };
 
+  const debouncedSetQuery = useCallback(
+    debounce((newValue) => {
+      setQuery(newValue);
+    }, 500),
+    []
+  );
+
+  const handleInputChange = (event: any) => {
+    debouncedSetQuery(event.target.value);
+  };
+
   return (
     <header className="fixed w-full backdrop-blur-sm bg-[#0F1827]/80 flex transition-all pl-16 z-40">
       <div className="flex justify-between items-center w-full relative px-4 py-[0.7rem]">
-        {/* <div
-          onClick={() => router.push(`/`)}
-          className={clsx(
-            "text-white text-sm font-light z-20 py-3 mx-auto uppercase cursor-pointer transition-all",
-            { "opacity-0": open }
-          )}
-        >
-          The <span className="text-xl text-yellow-300">Movie</span> Hub
-        </div> */}
-        {/* <div className="flex w-1/2">
+        <div className="flex w-1/2">
           <button className="text-white z-20 mr-6 py-2">
             <SearchIcon />
           </button>
           <input
             type="text"
-            placeholder="Search movies, actors, editors, etc"
+            placeholder="Search movies, actors, etc"
             className="w-full bg-transparent text-white text-sm font-light border-0 ring-0 outline-0 placeholder-gray-400 tracking-wide"
+            onChange={handleInputChange}
           />
-        </div> */}
+        </div>
         <div className="relative top-0.5 ml-auto py-[3px]">
           <button
             className={`text-white z-20 transition-all ${open && "hidden"}`}
@@ -155,62 +283,112 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
             </Transition>
           </div>
         </div>
-        <input
-          placeholder="Search movies, tv shows or people..."
-          onChange={(e) => setQuery(e.target.value)}
-          className={clsx(
-            "absolute top-2 left-10 lg:left-0 z-20 w-[90%] px-10 py-2 bg-transparent text-white text-xl outline-none border-none",
-            { flex: open, hidden: !open }
-          )}
-          type="text"
-          autoComplete="off"
-        />
-        <div
-          className={clsx(
-            "absolute top-[4.3rem] left-0 px-10 flex flex-col z-20 w-full h-screen overflow-auto",
-            {
-              hidden: !open,
-            }
-          )}
-        >
-          {results?.map((item: any) => {
-            return (
-              <div
-                className="flex p-10 xl:px-0 cursor-pointer transition-all border-b border-gray-400/40 w-full mx-auto"
-                onClick={() => handleClick(item.id, item.media_type)}
-              >
-                <img
-                  className="w-20 xl:w-40 rounded-sm xl:rounded-md"
-                  src={`https://image.tmdb.org/t/p/w400${
-                    item.poster_path || item.profile_path
-                  }`}
-                />
-                <div className="flex flex-col justify-between ml-4 xl:ml-8">
-                  <div>
-                    <p className="text-white text-xl font-semibold">
-                      {item.title || item.name || item.original_title} •{" "}
-                      <span className="font-light capitalize">
-                        {item.media_type}
-                      </span>
-                    </p>
-                    {item.media_type !== "person" && (
-                      <p className="text-white">
-                        {moment(item.release_date).format("MMMM d YYYY")}
-                      </p>
-                    )}
-                  </div>
-                  {item.media_type !== "person" && (
-                    <div>
-                      <p className="text-white text-sm bg-black w-fit px-4 py-2 rounded-full border-2 border-yellow-400">
-                        {Math.round(item.vote_average)}
-                      </p>
-                    </div>
-                  )}
-                </div>
+        {displayResultsWindow && (
+          <div className="absolute top-[3.6rem] -left-[0.2rem] backdrop-blur-md bg-[#0f1829]/90 px-10 pl-16 pt-4 pb-32 flex flex-col z-20 w-full h-screen overflow-y-auto">
+            <div className="flex gap-2 pb-6 pl-2">
+              <WarningIcon />
+              <p className="text-slate-100/60 text-xs w-full xl:w-2/3 2xl:w-1/2">
+                The search feature is powered by AI to accommodate Natural
+                Language Processing (NLP) - this means that you can provide any
+                query you want and the AI will do its best attempt to guess the
+                results. The AI model used for this feature has a cut-off
+                knowledge date of April 2021 as of last update. Please be aware
+                that some search results using AI-generated content may be
+                inaccurate. This feature is created for experimental purposes
+                only.
+              </p>
+            </div>
+            {loading && (
+              <div className="flex flex-col justify-center items-center gap-4 h-full">
+                <CircularProgress />
+                <p className="text-white">Processing your query</p>
               </div>
-            );
-          })}
-        </div>
+            )}
+            <div className="flex flex-col gap-10">
+              <div>
+                {results.movies?.length > 0 && (
+                  <>
+                    <p className="text-white uppercase tracking-wider font-light pl-2 pb-2">
+                      Movies
+                    </p>
+                    <div className="flex flex-col md:flex-row flex-wrap w-full xl:w-1/2">
+                      {results.movies?.map((m, index) => {
+                        return (
+                          <Link
+                            key={index}
+                            href={`/movie/${m?.id}`}
+                            className="relative w-full md:w-1/2 flex gap-3 rounded-sm p-2 cursor-pointer text-white hover:bg-slate-800/80 transition duration-200 ease-out"
+                            onClick={() => setDisplayResultsWindow(false)}
+                          >
+                            <Image
+                              src={`https://image.tmdb.org/t/p/w400${m?.poster_path}`}
+                              alt={m?.title || "Movie poster"}
+                              className="rounded-sm"
+                              width={50}
+                              height={100}
+                              priority
+                            />
+                            <div className="mt-3 text-left">
+                              <p className="font-medium text-sm leading-5 uppercase tracking-wide">
+                                {m?.title}
+                              </p>
+                              {m?.release_date && (
+                                <p className="text-[#adff4f] text-xs font-medium uppercase tracking-wider">
+                                  {moment(m?.release_date).format("YYYY")}
+                                </p>
+                              )}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="flex flex-col">
+                {results.people.length > 0 && (
+                  <>
+                    <p className="text-white uppercase tracking-wider font-light pl-2 pb-2">
+                      People
+                    </p>
+                    <div className="flex flex-col md:flex-row flex-wrap w-full xl:w-1/2">
+                      {results.people?.map((p, index) => {
+                        return (
+                          <Link
+                            key={index}
+                            href={`/person/${p.id}`}
+                            className="relative w-full md:w-1/2 flex gap-3 rounded-sm p-2 cursor-pointer text-white hover:bg-slate-800/80 transition duration-200 ease-out"
+                            onClick={() => setDisplayResultsWindow(false)}
+                          >
+                            {p?.profile_path ? (
+                              <Image
+                                src={`https://image.tmdb.org/t/p/w400${p?.profile_path}`}
+                                alt={p?.name || "Profile image"}
+                                className="rounded-md shadow-xl"
+                                width={50}
+                                height={100}
+                                priority
+                              />
+                            ) : (
+                              <div className="w-[50px] h-[100px] bg-black/70"></div>
+                            )}
+
+                            <div className="mt-3 mr-1 text-left">
+                              <p className="font-medium text-sm leading-5 uppercase tracking-wide">
+                                {p?.name}
+                              </p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

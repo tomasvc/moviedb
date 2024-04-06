@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { fetchMovieDetails, fetchPersonDetails } from "../../pages/api";
+import { fetchMovieDetails, fetchPersonDetails } from "../../api";
 import { useRouter } from "next/router";
 import { Transition } from "@headlessui/react";
 import { ItemPopupTypes } from "./types";

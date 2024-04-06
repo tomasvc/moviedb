@@ -1,4 +1,11 @@
-const API_KEY = process.env.TMDB_API_KEY
+const API_KEY = process.env.TMDB_API_KEY;
+
+const API_ENDPOINTS = {
+    popularMovies: `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}`,
+    trendingMovies: `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`,
+    multiSearch: `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`,
+    movieGenres: `https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`
+}
 
 export async function fetchMovies(page: number) {
     const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=en-US&page=${page}`);
@@ -18,6 +25,22 @@ export async function fetchTrendingMovies() {
 
 export async function multiSearch(query: string) {
     const response = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&language=en-US&query=${query}`);
+    if (!response.ok) {
+        throw new Error("Failed to fetch")
+    }
+    return response.json()
+    }
+
+export async function movieSearch(query: string) {
+    const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&language=en-US&query=${query}`);
+    if (!response.ok) {
+        throw new Error("Failed to fetch")
+    }
+    return response.json()
+    }
+
+export async function personSearch(query: string) {
+    const response = await fetch(`https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&language=en-US&query=${query}`);
     if (!response.ok) {
         throw new Error("Failed to fetch")
     }
@@ -122,6 +145,14 @@ export async function fetchMovieImages(id: string) {
 
 export async function fetchMovieVideos(id: string) {
     const response = await fetch(`https://api.themoviedb.org/3/movie/${id}/videos?api_key=${API_KEY}&language=en-US`);
+    if (!response.ok) {
+        throw new Error("Failed to fetch")
+    }
+    return response.json()
+    }
+
+export async function fetchPersonImages(id: string) {
+    const response = await fetch(`https://api.themoviedb.org/3/person/${id}/images?api_key=${API_KEY}&language=en-US`);
     if (!response.ok) {
         throw new Error("Failed to fetch")
     }

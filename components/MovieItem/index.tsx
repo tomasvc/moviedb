@@ -12,7 +12,6 @@ type MovieItemProps = {
 };
 
 export const MovieItem: React.FC<MovieItemProps> = ({
-  id,
   poster,
   name,
   release,
@@ -26,6 +25,7 @@ export const MovieItem: React.FC<MovieItemProps> = ({
         className="max-w-[150px] rounded-md shadow-xl"
         width={500}
         height={300}
+        priority
       />
       <div className="mt-3 mr-1 text-left">
         <p className="font-medium text-sm leading-5 uppercase tracking-wide">

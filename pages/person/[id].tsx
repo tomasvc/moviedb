@@ -4,13 +4,15 @@ import {
   fetchPersonDetails,
   fetchPersonExternals,
   fetchPersonCombinedCredits,
-} from "../api";
+  fetchPersonImages,
+} from "../../api";
 import { Header } from "../../components/Header";
 import { ItemPopup } from "../../components/ItemPopup";
 import { SideMenu } from "../../components/SideMenu";
 import { InstagramIcon, ImdbIcon } from "../../components/Icons";
 import { useHeaderContext } from "../../contexts/headerContext";
 import { Transition } from "@headlessui/react";
+import Image from "next/image";
 import clsx from "clsx";
 import moment from "moment";
 
@@ -24,6 +26,7 @@ export default function PersonPage() {
   const [person, setPerson] = useState<any>();
   const [externals, setExternals] = useState<any>();
   const [credits, setCredits] = useState<any>();
+  const [images, setImages] = useState<any>();
 
   const handleMouseEnter = (index) => {
     setHoveredIndex(index);
@@ -38,9 +41,12 @@ export default function PersonPage() {
       const data = await fetchPersonDetails(id as string);
       const externals = await fetchPersonExternals(id as string);
       const credits = await fetchPersonCombinedCredits(id as string);
+      const images = await fetchPersonImages(id as string);
 
       setPerson(data);
       setExternals(externals);
+      setImages(images.profiles);
+      console.log(images);
 
       const sortedCast = credits?.cast.sort((a: any, b: any) => {
         if (a.release_date === undefined && a.first_air_date === undefined)
@@ -152,6 +158,34 @@ export default function PersonPage() {
                     ),
                   }}
                 />
+              </div>
+            )}
+            {images?.length > 1 && (
+              <div className="mt-10">
+                <div className="flex gap-0.5 h-[300px]">
+                  <img
+                    className="shadow-lg object-cover w-1/3 h-[300px] overflow-hidden"
+                    alt="Image one"
+                    src={`https://image.tmdb.org/t/p/w400${images[1]?.file_path}`}
+                    width="200"
+                    height="200"
+                  />
+                  <div className="grid grid-cols-3 grid-rows-2 gap-0.5 w-2/3">
+                    {images?.slice(2, 8).map((item, index) => {
+                      return (
+                        <div
+                          key={index}
+                          className="w-full h-full shadow-lg overflow-hidden object-cover"
+                        >
+                          <img
+                            className="shadow-lg w-full h-full"
+                            src={`https://image.tmdb.org/t/p/w400${item.file_path}`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
             <div className="bg-[#212b3d] shadow-lg mt-10 text-sm flex flex-col divide-y divide-slate-600 rounded-sm border border-slate-600">

@@ -4,7 +4,7 @@ import {
   multiSearch,
   fetchCollection,
   fetchMovieGenres,
-} from "../api";
+} from "../../api";
 import { MovieItem } from "../../components/MovieItem";
 import { Header } from "../../components/Header";
 import { useHeaderContext } from "../../contexts/headerContext";

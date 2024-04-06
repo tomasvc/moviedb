@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { fetchMovies, fetchMovieGenres, fetchMovieVideos } from "./api";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { fetchMovies, fetchMovieGenres, fetchMovieVideos } from "../api";
 import { MovieItem } from "../components/MovieItem";
 import { Header } from "../components/Header";
 import { useHeaderContext } from "../contexts/headerContext";
@@ -7,10 +7,24 @@ import { SideMenu } from "../components/SideMenu";
 import { PlayIcon } from "../components/Icons";
 import { useRouter } from "next/router";
 import { Video } from "../components/Video";
+import useSWRInfinite, { SWRInfiniteKeyLoader } from "swr/infinite";
+import debounce from "lodash";
+import axios from "axios";
 import Head from "next/head";
 import moment from "moment";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
+
+const fetcher = (url: string): Promise<any> =>
+  axios.get(url).then((res) => res.data);
+
+function useLoadMorePages(initialSize = 1, increment = 2) {
+  const [pageSize, setPageSize] = useState(initialSize);
+
+  const loadMore = () => setPageSize((prevSize) => prevSize + increment);
+
+  return [pageSize, loadMore];
+}
 
 export default function Home() {
   const [state, setState] = useState({
@@ -23,10 +37,10 @@ export default function Home() {
     selectedList: "Popular",
     loadedPages: 0,
   });
+  const [pageSize, loadMore] = useLoadMorePages(2, 2);
   const { open, setOpen } = useHeaderContext();
   const playerRef = useRef(null);
   const loadedPagesRef = useRef(state.loadedPages);
-  const moviesRef = useRef(state.movies);
   const router = useRouter();
   const [videoJsOptions, setVideoJsOptions] = useState({
     autoplay: false,
@@ -53,6 +67,28 @@ export default function Home() {
     });
   };
 
+  const { data, isLoading, error, size, setSize } = useSWRInfinite(
+    (index) =>
+      `https://api.themoviedb.org/3/movie/popular?api_key=${
+        process.env.TMDB_API_KEY
+      }&language=en-US&page=${index + 1}`,
+    fetcher
+  );
+
+  const movies = data
+    ? data.flatMap((page) =>
+        page.results.filter(
+          (movie: any) =>
+            !data
+              .slice(0, data.indexOf(page))
+              .flatMap((p) => p.results)
+              .some((m) => m.id === movie.id)
+        )
+      )
+    : [];
+
+  const moviesRef = useRef(movies);
+
   useEffect(() => {
     const setRowBasedOnWidth = () => {
       const width = window.innerWidth;
@@ -64,36 +100,14 @@ export default function Home() {
 
     setRowBasedOnWidth();
     window.addEventListener("resize", setRowBasedOnWidth, false);
-    window.addEventListener("scroll", handleScroll);
 
     return () => {
       window.removeEventListener("resize", setRowBasedOnWidth, false);
-      window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [setSize]);
 
   useEffect(() => {
     async function fetchData() {
-      Promise.all([fetchMovies(1), fetchMovies(2)]).then((response) => {
-        if (response.length > 0) {
-          const data = response.reduce((acc, res) => {
-            return { ...acc, results: [...acc.results, ...res.results] };
-          });
-          const filteredData = [];
-          for (let i = 0; i < data.results.length; i++) {
-            if (
-              !filteredData.some((movie) => movie.id === data.results[i].id)
-            ) {
-              filteredData.push(data.results[i]);
-            }
-          }
-          setState((prevState) => ({
-            ...prevState,
-            movies: filteredData,
-            loadedPages: 2,
-          }));
-        }
-      });
       const movieGenres = await fetchMovieGenres();
       setState((prevState) => ({ ...prevState, genres: movieGenres.genres }));
     }
@@ -101,14 +115,14 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchVideos() {
       const getVideos =
         state.selectedMovieIndex &&
-        (await fetchMovieVideos(state.movies[state.selectedMovieIndex].id));
+        (await fetchMovieVideos(movies[state.selectedMovieIndex]?.id));
       setState((prevState) => ({ ...prevState, videos: getVideos?.results }));
     }
 
-    fetchData();
+    fetchVideos();
   }, [state.selectedMovieIndex]);
 
   useEffect(() => {
@@ -131,15 +145,8 @@ export default function Home() {
   }, [state.loadedPages]);
 
   useEffect(() => {
-    moviesRef.current = state.movies;
-  }, [state.movies]);
-
-  const handleScroll = () => {
-    const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
-    if (scrollTop + clientHeight >= scrollHeight - 20) {
-      loadMoreMovies();
-    }
-  };
+    moviesRef.current = movies;
+  }, [movies]);
 
   const loadMoreMovies = async () => {
     const nextPage = loadedPagesRef.current + 1;
@@ -157,11 +164,11 @@ export default function Home() {
   };
 
   const rows = Array.from(
-    { length: Math.ceil(state.movies.length / state.rowLength) },
+    { length: Math.ceil(movies.length / state.rowLength) },
     (_, rowIndex) => (
       <div key={`${rowIndex}-${state.rowLength}`}>
         <div className="flex justify-start px-20 w-[80%] mx-auto">
-          {state.movies
+          {movies
             .slice(rowIndex * state.rowLength, (rowIndex + 1) * state.rowLength)
             .map((movie, index) => (
               <div
@@ -176,7 +183,7 @@ export default function Home() {
               >
                 <div
                   className={`p-4 h-full cursor-pointer ${
-                    state.movies[state.selectedMovieIndex]?.id === movie.id &&
+                    movies[state.selectedMovieIndex]?.id === movie.id &&
                     "bg-gray-900 border-b-4 border-slate-200 rounded-tl rounded-tr transition ease-in"
                   }`}
                 >
@@ -199,7 +206,7 @@ export default function Home() {
               className="relative w-full min-h-[50vh] py-14 xl:py-32 shadow-inner animate-fadeUp transition-all duration-300"
               style={{
                 backgroundImage: `url(https://image.tmdb.org/t/p/original${
-                  state.movies[state.selectedMovieIndex]?.backdrop_path
+                  movies[state.selectedMovieIndex]?.backdrop_path
                 })`,
                 backgroundSize: "cover",
                 backgroundPosition: "top",
@@ -212,21 +219,19 @@ export default function Home() {
               <div className="max-w-2xl xl:max-w-6xl h-full mx-auto flex items-center">
                 <div className="flex flex-col text-white">
                   <h1 className="text-3xl xl:text-5xl uppercase tracking-wider font-semibold w-1/2 z-10">
-                    {state.movies[state.selectedMovieIndex].original_title}
+                    {movies[state.selectedMovieIndex].original_title}
                   </h1>
                   <div className="flex items-center gap-3 mt-3 uppercase text-sm z-10">
                     <p>
                       {moment(
-                        state.movies[state.selectedMovieIndex].release_date
+                        movies[state.selectedMovieIndex].release_date
                       ).format("YYYY")}
                     </p>
                     <p>•</p>
                     <p>
                       {state.genres
                         ?.filter((genre) =>
-                          state.movies[
-                            state.selectedMovieIndex
-                          ]?.genre_ids.some(
+                          movies[state.selectedMovieIndex]?.genre_ids.some(
                             (movieGenre) => movieGenre === genre.id
                           )
                         )
@@ -235,12 +240,12 @@ export default function Home() {
                     </p>
                   </div>
                   <p className="mt-6 w-1/2 leading-7 text-[0.9rem] z-10">
-                    {state.movies[state.selectedMovieIndex].overview}
+                    {movies[state.selectedMovieIndex].overview}
                   </p>
                   <button
                     onClick={() =>
                       router.push(
-                        `/movie/${state.movies[state.selectedMovieIndex].id}`
+                        `/movie/${movies[state.selectedMovieIndex].id}`
                       )
                     }
                     className="mt-8 px-4 py-2 uppercase text-xs tracking-wide rounded-sm bg-[#5937ef] hover:bg-[#6b4aff] text-white font-semibold w-fit cursor-pointer z-10 transition"
@@ -271,6 +276,9 @@ export default function Home() {
     )
   );
 
+  if (error) return <div>Failed to load.</div>;
+  if (!data) return <div>Loading...</div>;
+
   return (
     <div className="bg-[#192231] font-roboto">
       <Head>
@@ -281,9 +289,9 @@ export default function Home() {
         <SideMenu selected="home" />
         <div className="w-full relative">
           <Header open={open} setOpen={setOpen} />
-          <div className="my-20 animate-fadeUp flex flex-col justify-center mx-auto">
-            {/* <div className="max-w-[1790px] w-full mx-auto flex gap-1 pb-6">
-              <button className="w-1/4 text-white bg-gray-900 uppercase">
+          <div className="mt-14 mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
+            <div className="w-full mx-auto flex jusify-center items-center gap-1 py-6 mb-6 bg-black/50">
+              {/* <button className="w-1/4 text-white bg-gray-900 uppercase">
                 Popular
               </button>
               <button className="w-1/4 h-20 text-white bg-gray-900 uppercase">
@@ -294,9 +302,21 @@ export default function Home() {
               </button>
               <button className="w-1/4 h-20 text-white bg-gray-900 uppercase">
                 Now Playing
-              </button>
-            </div> */}
+              </button> */}
+              <p className="text-white text-3xl font-thin tracking-wider uppercase mx-auto">
+                Trending movies
+              </p>
+            </div>
             {rows}
+            <div className="flex justify-center mx-auto pt-10">
+              <button
+                onClick={() => setSize(size + 1)}
+                disabled={isLoading}
+                className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-gray-400 text-white text-xs px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
+              >
+                {isLoading ? "Loading" : "Load more"}
+              </button>
+            </div>
           </div>
           {state.showVideo && (
             <div className="fixed top-0 left-0 z-50 bg-black/90 backdrop-blur-sm flex justify-center items-center w-full h-screen">
