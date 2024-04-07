@@ -129,14 +129,6 @@ export default function Movie({ movie, credits, reviews, keywords, similar }) {
                 </div>
                 {awards.includes("yes") && (
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="w-[25px] h-[25px]">
-                      <Image
-                        src={academyImage}
-                        alt="The Academy"
-                        width={100}
-                        height={100}
-                      />
-                    </div>
                     <p className="tracking-wider uppercase font-semibold text-xs mt-3.5 text-[#c3bf44]">
                       Academy Award&reg; Winner
                     </p>
