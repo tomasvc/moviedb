@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { fetchMovies, fetchMovieGenres, fetchMovieVideos } from "../api";
 import { MovieItem } from "../components/MovieItem";
 import { Header } from "../components/Header";
@@ -7,13 +7,13 @@ import { SideMenu } from "../components/SideMenu";
 import { PlayIcon } from "../components/Icons";
 import { useRouter } from "next/router";
 import { Video } from "../components/Video";
-import useSWRInfinite, { SWRInfiniteKeyLoader } from "swr/infinite";
-import debounce from "lodash";
+import useSWRInfinite from "swr/infinite";
 import axios from "axios";
 import Head from "next/head";
 import moment from "moment";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
+import wallpaper from "../assets/img/genres-wallpaper.jpg";
 
 const fetcher = (url: string): Promise<any> =>
   axios.get(url).then((res) => res.data);
@@ -59,7 +59,6 @@ export default function Home() {
     playerRef.current = player;
 
     player.on("waiting", () => {});
-
     player.on("dispose", () => {});
   };
 
@@ -143,21 +142,6 @@ export default function Home() {
   useEffect(() => {
     moviesRef.current = movies;
   }, [movies]);
-
-  const loadMoreMovies = async () => {
-    const nextPage = loadedPagesRef.current + 1;
-    const newMovies = await fetchMovies(nextPage);
-    if (newMovies.results.length > 0) {
-      const filteredData = newMovies.results.filter(
-        (movie) => !moviesRef.current.some((m) => m.id === movie.id)
-      );
-      setState((prevState) => ({
-        ...prevState,
-        loadedPages: nextPage,
-        movies: [...prevState.movies, ...filteredData],
-      }));
-    }
-  };
 
   const rows = Array.from(
     { length: Math.ceil(movies.length / state.rowLength) },
@@ -285,8 +269,19 @@ export default function Home() {
         <SideMenu selected="home" />
         <div className="w-full relative">
           <Header open={open} setOpen={setOpen} />
-          <div className="mt-14 mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
-            <div className="w-full mx-auto flex jusify-center items-center gap-1 py-6 mb-6 bg-black/50">
+          <div className="mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
+            <div
+              className="relative w-full mx-auto flex jusify-center items-center gap-1 py-6 mb-6 bg-black/50"
+              style={{
+                backgroundImage: `url(/images/genres-wallpaper.jpg)`,
+                backgroundSize: "cover",
+                backgroundPosition: "top",
+                backgroundRepeat: "no-repeat",
+                backgroundAttachment: "fixed",
+                minHeight: "300px",
+              }}
+            >
+              <div className="absolute top-0 left-0 w-screen h-full bg-black/50" />
               {/* <button className="w-1/4 text-white bg-gray-900 uppercase">
                 Popular
               </button>
@@ -299,7 +294,7 @@ export default function Home() {
               <button className="w-1/4 h-20 text-white bg-gray-900 uppercase">
                 Now Playing
               </button> */}
-              <p className="text-white text-3xl font-thin tracking-wider uppercase mx-auto">
+              <p className="text-white/90 text-2xl font-semibold tracking-wider uppercase mx-auto z-10">
                 Trending movies
               </p>
             </div>
