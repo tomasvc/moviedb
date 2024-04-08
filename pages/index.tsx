@@ -58,13 +58,9 @@ export default function Home() {
   const handlePlayerReady = (player) => {
     playerRef.current = player;
 
-    player.on("waiting", () => {
-      console.log("player is waiting");
-    });
+    player.on("waiting", () => {});
 
-    player.on("dispose", () => {
-      console.log("player will dispose");
-    });
+    player.on("dispose", () => {});
   };
 
   const { data, isLoading, error, size, setSize } = useSWRInfinite(

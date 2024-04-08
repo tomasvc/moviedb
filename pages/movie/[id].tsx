@@ -1,11 +1,5 @@
-import { GetStaticProps } from "next";
-import {
-  fetchMovieDetails,
-  fetchMovieCredits,
-  fetchMovieReviews,
-  fetchMovieKeywords,
-  fetchRecommendedMovies,
-} from "../../api";
+import { GetStaticPaths, GetStaticProps } from "next";
+import { fetchMovieDetails, api } from "../../api";
 import { useState, useEffect } from "react";
 import { SideMenu } from "../../components/SideMenu";
 import { useRouter } from "next/router";
@@ -14,41 +8,42 @@ import Image from "next/image";
 import { Header } from "../../components/Header";
 import { MovieItem } from "../../components/MovieItem";
 import { useHeaderContext } from "../../contexts/headerContext";
-import { StarIcon, UserIcon } from "../../components/Icons";
+import { StarIcon, UserIcon, TrophyIconMini } from "../../components/Icons";
+import useSWR from "swr";
 import OpenAI from "openai";
 import clsx from "clsx";
 import moment from "moment";
-
-import academyImage from "../../assets/img/academy.png";
+import { fetcher } from "../../api";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   dangerouslyAllowBrowser: true,
 });
 
-export const getStaticProps = (async (context) => {
+export const getServerSideProps = (async (context) => {
   const { id } = context.params as { id: string };
 
   const movie = await fetchMovieDetails(id);
-  const credits = await fetchMovieCredits(id);
-  const reviews = await fetchMovieReviews(id);
-  const keywords = await fetchMovieKeywords(id);
-  const similar = await fetchRecommendedMovies(id);
 
-  return { props: { movie, credits, reviews, keywords, similar } };
-}) satisfies GetStaticProps<{}>;
-
-export const getStaticPaths = async () => {
   return {
-    paths: [], //indicates that no page needs be created at build time
-    fallback: "blocking", //indicates the type of fallback
+    props: {
+      movie,
+    },
   };
-};
+}) satisfies GetStaticProps;
 
-export default function Movie({ movie, credits, reviews, keywords, similar }) {
+export default function Movie({ movie }) {
   const router = useRouter();
+  const { id } = router.query;
+
+  const { data: credits } = useSWR(api.credits(id as string), fetcher);
+  const { data: reviews } = useSWR(api.reviews(id as string), fetcher);
+  const { data: keywords } = useSWR(api.keywords(id as string), fetcher);
+  const { data: similar } = useSWR(api.recommendations(id as string), fetcher);
+
   const { open, setOpen } = useHeaderContext();
   const [awards, setAwards] = useState("");
+  const [showFullComment, setShowFullComment] = useState(false);
 
   const findCreditsByKeyword = (credits: any, keyword: string) => {
     return (
@@ -129,7 +124,8 @@ export default function Movie({ movie, credits, reviews, keywords, similar }) {
                 </div>
                 {awards.includes("yes") && (
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="tracking-wider uppercase font-semibold text-xs mt-3.5 text-[#c3bf44]">
+                    <TrophyIconMini />
+                    <p className="tracking-wider uppercase font-semibold text-xs mt-0.5 text-[#c3bf44]">
                       Academy Award&reg; Winner
                     </p>
                   </div>
@@ -261,14 +257,14 @@ export default function Movie({ movie, credits, reviews, keywords, similar }) {
                   );
                 })}
                 {/* <button className="bg-[#263146] whitespace-nowrap font-bold p-10 flex justify-center items-center shadow-lg rounded-md">
-                  View more
-                </button> */}
+                    View more
+                  </button> */}
               </div>
               {/* <button className="font-medium text-lg mt-2">
-                Full Cast & Crew
-              </button> */}
+                  Full Cast & Crew
+                </button> */}
             </div>
-            {reviews?.length > 0 && (
+            {reviews?.results?.length > 0 && (
               <div className="w-full mx-auto py-8">
                 <div className="flex gap-3 items-center">
                   <div className="w-1.5 h-7 bg-blue-400" />
@@ -276,7 +272,7 @@ export default function Movie({ movie, credits, reviews, keywords, similar }) {
                     Social
                   </h2>
                   <button className="font-semibold mt-1.5 pb-1 border-b-4 border-slate-600">
-                    Reviews {reviews?.length}
+                    Reviews {reviews?.results?.length}
                   </button>
                   <button className="font-semibold mb-1 ml-2">
                     Discussions
@@ -284,15 +280,18 @@ export default function Movie({ movie, credits, reviews, keywords, similar }) {
                 </div>
                 <div className="bg-[#263146] shadow-md border border-slate-600 p-8 mt-8 rounded-lg">
                   <div className="flex w-full">
-                    {reviews[0]?.author_details?.avatar_path?.length ? (
+                    {reviews?.results[0]?.author_details?.avatar_path
+                      ?.length ? (
                       <img
                         className="rounded-full w-16 h-16"
                         src={
-                          reviews[0]?.author_details?.avatar_path?.includes(
+                          reviews?.results[0]?.author_details?.avatar_path?.includes(
                             "https"
                           )
-                            ? reviews[0]?.author_details?.avatar_path?.slice(1)
-                            : `https://image.tmdb.org/t/p/w400${reviews[0]?.author_details?.avatar_path}`
+                            ? reviews?.results[0]?.author_details?.avatar_path?.slice(
+                                1
+                              )
+                            : `https://image.tmdb.org/t/p/w400${reviews?.results[0]?.author_details?.avatar_path}`
                         }
                       />
                     ) : (
@@ -302,26 +301,37 @@ export default function Movie({ movie, credits, reviews, keywords, similar }) {
                     <div className="ml-6 mb-auto flex flex-col">
                       <div className="flex items-center">
                         <p className="text-xl font-bold">
-                          A review by {reviews[0]?.author}
+                          A review by {reviews?.results[0]?.author}
                         </p>
                         <div className="flex items-center gap-1 bg-black text-sm font-light h-fit px-2.5 rounded-md ml-2">
                           <StarIcon />
-                          <p>{reviews[0]?.author_details?.rating}</p>
+                          <p>{reviews?.results[0]?.author_details?.rating}</p>
                         </div>
                       </div>
                       <p className="text-sm font-light text-gray-400">
-                        Written by {reviews[0]?.author} on{" "}
-                        {moment(reviews[0]?.created_at).format("MMMM d, YYYY")}
+                        Written by {reviews?.results[0]?.author} on{" "}
+                        {moment(reviews?.results[0]?.created_at).format(
+                          "MMMM d, YYYY"
+                        )}
                       </p>
                       <div
-                        className="mt-8"
+                        className={`mt-8 ${
+                          showFullComment ? "line-clamp-none" : "line-clamp-6"
+                        }`}
                         dangerouslySetInnerHTML={{
-                          __html: reviews[0]?.content.replace(
+                          __html: reviews?.results[0]?.content.replace(
                             /(?:\r\n|\r|\n)/g,
                             "<br>"
                           ),
                         }}
                       />
+                      <button
+                        onClick={() => setShowFullComment(!showFullComment)}
+                        className="w-fit text-xs uppercase font-semibold mt-8"
+                      >
+                        {"Show"}
+                        {showFullComment ? " less" : " more"}
+                      </button>
                     </div>
                   </div>
                 </div>

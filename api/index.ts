@@ -1,10 +1,36 @@
 const API_KEY = process.env.TMDB_API_KEY;
+import axios from 'axios';
 
-const API_ENDPOINTS = {
+export const fetcher = async (url: string) => {
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      console.error("Error data:", error.response.data);
+      console.error("Error status:", error.response.status);
+      console.error("Error headers:", error.response.headers);
+      throw new Error(`Data fetching failed with status ${error.response.status}`);
+    } else if (error.request) {
+      console.error("Error request:", error.request);
+      throw new Error("No response received for the data request.");
+    } else {
+      console.error("Error message:", error.message);
+      throw new Error("Error in setting up the data request.");
+    }
+  }
+};
+
+
+export const api = {
     popularMovies: `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}`,
     trendingMovies: `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`,
     multiSearch: `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`,
-    movieGenres: `https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`
+    movieGenres: `https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`,
+    credits: (id: string) => `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${API_KEY}&language=en-US`,
+    reviews: (id: string) => `https://api.themoviedb.org/3/movie/${id}/reviews?api_key=${API_KEY}&language=en-US`,
+    keywords: (id: string) => `https://api.themoviedb.org/3/movie/${id}/keywords?api_key=${API_KEY}&language=en-US`,
+    recommendations: (id: string) => `https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${API_KEY}&language=en-US`,
 }
 
 export async function fetchMovies(page: number) {
