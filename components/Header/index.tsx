@@ -234,50 +234,52 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
   };
 
   return (
-    <header className="fixed w-full backdrop-blur-sm bg-[#0F1827]/80 flex transition-all pl-16 z-40">
-      <div className="flex justify-between items-center w-full relative px-4 py-[0.7rem]">
-        <div className="flex w-1/2">
-          <button className="text-white z-20 mr-6 py-2">
-            <SearchIcon />
-          </button>
-          <input
-            type="text"
-            placeholder="Search movies, actors, etc"
-            className="w-full bg-transparent text-white text-sm font-light border-0 ring-0 outline-0 placeholder-gray-400 tracking-wide"
-            onChange={handleInputChange}
-          />
-        </div>
-        <div className="relative top-0.5 ml-auto py-[3px]">
-          <button
-            className={`text-white z-20 transition-all ${open && "hidden"}`}
-            onClick={() => handleAccountClick()}
-          >
-            {data?.user ? (
-              <div className="w-8 h-8 font-light rounded-full bg-indigo-600 flex justify-center items-center">
-                <p className="pt-0.5">
-                  {data.user.name.slice(0, 1).toUpperCase()}
-                </p>
-              </div>
-            ) : (
-              <UserIcon />
-            )}
-          </button>
-          <div ref={wrapperRef} className="absolute top-11 -right-2">
-            <Transition
-              show={openMenu}
-              enter="transition-all opacity transform duration-150"
-              enterFrom="opacity-0 translate-y-2"
-              enterTo="opacity-100 translate-y-0"
-              leave="transition-all opacity transform duration-150"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-2"
+    <header className="fixed w-full backdrop-blur-md border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] to-transparent flex transition-all pl-16 z-40">
+      <div className="flex flex-col justify-between items-center w-full relative px-4 py-[0.7rem]">
+        <div className="w-full flex">
+          <div className="flex w-1/2">
+            <button className="text-white z-20 mr-6 py-2">
+              <SearchIcon />
+            </button>
+            <input
+              type="text"
+              placeholder="Search movies, actors, etc"
+              className="w-full bg-transparent text-white text-sm font-light border-0 ring-0 outline-0 placeholder-gray-400 tracking-wide"
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="relative top-0.5 ml-auto py-[3px]">
+            <button
+              className={`text-white z-20 transition-all ${open && "hidden"}`}
+              onClick={() => handleAccountClick()}
             >
-              <UserMenu name={data?.user?.name} />
-            </Transition>
+              {data?.user ? (
+                <div className="w-8 h-8 font-light rounded-full bg-indigo-600 flex justify-center items-center">
+                  <p className="pt-0.5">
+                    {data.user.name.slice(0, 1).toUpperCase()}
+                  </p>
+                </div>
+              ) : (
+                <UserIcon />
+              )}
+            </button>
+            <div ref={wrapperRef} className="absolute top-11 -right-2">
+              <Transition
+                show={openMenu}
+                enter="transition-all opacity transform duration-150"
+                enterFrom="opacity-0 translate-y-2"
+                enterTo="opacity-100 translate-y-0"
+                leave="transition-all opacity transform duration-150"
+                leaveFrom="opacity-100 translate-y-0"
+                leaveTo="opacity-0 translate-y-2"
+              >
+                <UserMenu name={data?.user?.name} />
+              </Transition>
+            </div>
           </div>
         </div>
         {displayResultsWindow && (
-          <div className="absolute top-[3.6rem] -left-[0.2rem] backdrop-blur-md bg-[#0f1829]/90 px-10 pl-16 pt-4 pb-32 flex flex-col z-20 w-full h-screen overflow-y-auto">
+          <div className="relative top-[1rem] left-[1.8rem] px-10 pl-16 pt-4 pb-32 flex flex-col z-20 w-screen h-screen overflow-y-auto">
             <div className="flex gap-2 pb-6 pl-2">
               <WarningIcon />
               <p className="text-slate-100/60 text-xs w-full xl:w-2/3 2xl:w-1/2">
