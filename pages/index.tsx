@@ -203,8 +203,10 @@ export default function Home() {
                 backgroundSize: "cover",
                 backgroundPosition: "top",
                 backgroundRepeat: "no-repeat",
-                backgroundAttachment: "fixed",
+                backgroundAttachment:
+                  window.innerWidth > 500 ? "fixed" : "scroll",
                 minHeight: "400px",
+                width: "100vw",
               }}
             >
               <div className="absolute w-full h-full bg-black opacity-40 top-0 left-0 shadow-inner" />
@@ -289,8 +291,10 @@ export default function Home() {
                 backgroundSize: "cover",
                 backgroundPosition: "top",
                 backgroundRepeat: "no-repeat",
-                backgroundAttachment: "fixed",
+                backgroundAttachment:
+                  window.innerWidth > 500 ? "fixed" : "scroll",
                 minHeight: "300px",
+                width: "100vw",
               }}
             >
               <div className="absolute top-0 left-0 w-screen h-full bg-black/50" />

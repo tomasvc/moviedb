@@ -18,11 +18,11 @@ export const MovieItem: React.FC<MovieItemProps> = ({
 }) => {
   const router = useRouter();
   return (
-    <div className="relative flex flex-col max-w-[180px] rounded-sm cursor-pointer text-white">
+    <div className="relative flex flex-col w-full max-w-[180px] rounded-sm cursor-pointer text-white">
       <Image
         src={`https://image.tmdb.org/t/p/w400${poster}`}
         alt={name}
-        className="max-w-[180px] w-auto rounded-md shadow-xl"
+        className="max-w-[180px] w-full rounded-md shadow-xl"
         width={500}
         height={300}
         priority

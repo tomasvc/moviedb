@@ -236,7 +236,13 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
     <header
       className={`${
         open ? "backdrop-blur-md" : "backdrop-blur-sm"
-      } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] to-transparent flex transition-all pl-16 z-40`}
+      } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${
+        (window.innerWidth > 500 && !open) || (window.innerWidth < 500 && !open)
+          ? "to-transparent"
+          : window.innerWidth < 500 && open
+          ? "to-[#090e17]/80"
+          : "to-transparent"
+      } flex transition-all pl-0 xl:pl-16 z-40`}
     >
       <div className="flex flex-col justify-between items-center w-full relative px-4 py-[0.7rem]">
         <div className="w-full flex">
@@ -282,10 +288,10 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
           </div>
         </div>
         {displayResultsWindow && (
-          <div className="relative top-[1rem] left-[1.8rem] px-10 pl-16 pt-4 pb-32 flex flex-col z-20 w-screen h-screen overflow-y-auto">
-            <div className="flex gap-2 pb-6 pl-2">
+          <div className="relative top-[1rem] left-[1.8rem] px-0 xl:px-10 lg:pl-16 pt-4 pb-32 flex flex-col z-20 w-screen h-screen overflow-y-auto">
+            <div className="flex gap-2 pb-6 pl-0 xl:pl-2">
               <WarningIcon />
-              <p className="text-slate-100/60 text-xs w-full xl:w-2/3 2xl:w-1/2">
+              <p className="text-slate-100/60 text-[0.5rem] md:text-xs w-3/4 lg:w-2/3 2xl:w-1/2">
                 The search feature is powered by AI to accommodate Natural
                 Language Processing (NLP) - this means that you can provide any
                 query you want and the AI will do its best attempt to guess the
