@@ -232,169 +232,171 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
     debouncedSetQuery(event.target.value);
   };
 
-  return (
-    <header
-      className={`${
-        open ? "backdrop-blur-md" : "backdrop-blur-sm"
-      } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${
-        (window?.innerWidth > 500 && !open) ||
-        (window?.innerWidth < 500 && !open)
-          ? "to-transparent"
-          : window?.innerWidth < 500 && open
-          ? "to-[#090e17]/80"
-          : "to-transparent"
-      } flex transition-all pl-0 xl:pl-16 z-40`}
-    >
-      <div className="flex flex-col justify-between items-center w-full relative px-4 py-[0.7rem]">
-        <div className="w-full flex">
-          <div className="flex w-full lg:w-1/2 pr-4 lg:pr-0">
-            <button className="text-white z-20 mr-6 py-2">
-              <SearchIcon />
-            </button>
-            <input
-              type="text"
-              placeholder="Search movies, actors, etc"
-              className="w-full bg-transparent text-white text-sm font-light border-0 ring-0 outline-0 placeholder-gray-400 tracking-wide"
-              onChange={handleInputChange}
-            />
-          </div>
-          <div className="relative top-0.5 ml-auto py-[3px]">
-            <button
-              className={`text-white z-20 transition-all ${open && "hidden"}`}
-              onClick={() => handleAccountClick()}
-            >
-              {data?.user ? (
-                <div className="w-8 h-8 font-light rounded-full bg-indigo-600 flex justify-center items-center">
-                  <p className="pt-0.5">
-                    {data.user.name.slice(0, 1).toUpperCase()}
-                  </p>
-                </div>
-              ) : (
-                <UserIcon />
-              )}
-            </button>
-            <div ref={wrapperRef} className="absolute top-11 -right-2">
-              <Transition
-                show={openMenu}
-                enter="transition-all opacity transform duration-150"
-                enterFrom="opacity-0 translate-y-2"
-                enterTo="opacity-100 translate-y-0"
-                leave="transition-all opacity transform duration-150"
-                leaveFrom="opacity-100 translate-y-0"
-                leaveTo="opacity-0 translate-y-2"
+  if (typeof window !== "undefined") {
+    return (
+      <header
+        className={`${
+          open ? "backdrop-blur-md" : "backdrop-blur-sm"
+        } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${
+          (window?.innerWidth > 500 && !open) ||
+          (window?.innerWidth < 500 && !open)
+            ? "to-transparent"
+            : window?.innerWidth < 500 && open
+            ? "to-[#090e17]/80"
+            : "to-transparent"
+        } flex transition-all pl-0 xl:pl-16 z-40`}
+      >
+        <div className="flex flex-col justify-between items-center w-full relative px-4 py-[0.7rem]">
+          <div className="w-full flex">
+            <div className="flex w-full lg:w-1/2 pr-4 lg:pr-0">
+              <button className="text-white z-20 mr-6 py-2">
+                <SearchIcon />
+              </button>
+              <input
+                type="text"
+                placeholder="Search movies, actors, etc"
+                className="w-full bg-transparent text-white text-sm font-light border-0 ring-0 outline-0 placeholder-gray-400 tracking-wide"
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="relative top-0.5 ml-auto py-[3px]">
+              <button
+                className={`text-white z-20 transition-all ${open && "hidden"}`}
+                onClick={() => handleAccountClick()}
               >
-                <UserMenu name={data?.user?.name} />
-              </Transition>
+                {data?.user ? (
+                  <div className="w-8 h-8 font-light rounded-full bg-indigo-600 flex justify-center items-center">
+                    <p className="pt-0.5">
+                      {data.user.name.slice(0, 1).toUpperCase()}
+                    </p>
+                  </div>
+                ) : (
+                  <UserIcon />
+                )}
+              </button>
+              <div ref={wrapperRef} className="absolute top-11 -right-2">
+                <Transition
+                  show={openMenu}
+                  enter="transition-all opacity transform duration-150"
+                  enterFrom="opacity-0 translate-y-2"
+                  enterTo="opacity-100 translate-y-0"
+                  leave="transition-all opacity transform duration-150"
+                  leaveFrom="opacity-100 translate-y-0"
+                  leaveTo="opacity-0 translate-y-2"
+                >
+                  <UserMenu name={data?.user?.name} />
+                </Transition>
+              </div>
             </div>
           </div>
-        </div>
-        {displayResultsWindow && (
-          <div className="relative top-[1rem] left-[1.8rem] px-0 xl:px-10 lg:pl-16 pt-4 pb-32 flex flex-col z-20 w-screen h-screen overflow-y-auto">
-            <div className="flex gap-2 pb-6 pl-0 xl:pl-2">
-              <WarningIcon />
-              <p className="text-slate-100/60 text-[0.5rem] md:text-xs w-3/4 lg:w-2/3 2xl:w-1/2">
-                The search feature is powered by AI to accommodate Natural
-                Language Processing (NLP) - this means that you can provide any
-                query you want and the AI will do its best attempt to guess the
-                results. The AI model used for this feature has a cut-off
-                knowledge date of April 2021 as of last update. Please be aware
-                that some search results using AI-generated content may be
-                inaccurate. This feature is created for experimental purposes
-                only.
-              </p>
-            </div>
-            {loading && (
-              <div className="flex flex-col justify-center items-center gap-4 h-full">
-                <CircularProgress />
-                <p className="text-white">Processing your query</p>
+          {displayResultsWindow && (
+            <div className="relative top-[1rem] left-[1.8rem] px-0 xl:px-10 lg:pl-16 pt-4 pb-32 flex flex-col z-20 w-screen h-screen overflow-y-auto">
+              <div className="flex gap-2 pb-6 pl-0 xl:pl-2">
+                <WarningIcon />
+                <p className="text-slate-100/60 text-[0.5rem] md:text-xs w-3/4 lg:w-2/3 2xl:w-1/2">
+                  The search feature is powered by AI to accommodate Natural
+                  Language Processing (NLP) - this means that you can provide
+                  any query you want and the AI will do its best attempt to
+                  guess the results. The AI model used for this feature has a
+                  cut-off knowledge date of April 2021 as of last update. Please
+                  be aware that some search results using AI-generated content
+                  may be inaccurate. This feature is created for experimental
+                  purposes only.
+                </p>
               </div>
-            )}
-            <div className="flex flex-col gap-10">
-              <div>
-                {results.movies?.length > 0 && (
-                  <>
-                    <p className="text-white uppercase tracking-wider font-light pl-2 pb-2">
-                      Movies
-                    </p>
-                    <div className="flex flex-col md:flex-row flex-wrap w-full xl:w-1/2">
-                      {results.movies?.map((m, index) => {
-                        return (
-                          <Link
-                            key={index}
-                            href={`/movie/${m?.id}`}
-                            className="relative w-full md:w-1/2 flex gap-3 rounded-sm p-2 cursor-pointer text-white hover:bg-slate-800/80 transition duration-200 ease-out"
-                            onClick={() => setDisplayResultsWindow(false)}
-                          >
-                            <Image
-                              src={`https://image.tmdb.org/t/p/w400${m?.poster_path}`}
-                              alt={m?.title || "Movie poster"}
-                              className="rounded-sm"
-                              width={50}
-                              height={100}
-                              priority
-                            />
-                            <div className="mt-3 text-left">
-                              <p className="font-medium text-sm leading-5 uppercase tracking-wide">
-                                {m?.title}
-                              </p>
-                              {m?.release_date && (
-                                <p className="text-[#adff4f] text-xs font-medium uppercase tracking-wider">
-                                  {moment(m?.release_date).format("YYYY")}
-                                </p>
-                              )}
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="flex flex-col">
-                {results.people.length > 0 && (
-                  <>
-                    <p className="text-white uppercase tracking-wider font-light pl-2 pb-2">
-                      People
-                    </p>
-                    <div className="flex flex-col md:flex-row flex-wrap w-full xl:w-1/2">
-                      {results.people?.map((p, index) => {
-                        return (
-                          <Link
-                            key={index}
-                            href={`/person/${p.id}`}
-                            className="relative w-full md:w-1/2 flex gap-3 rounded-sm p-2 cursor-pointer text-white hover:bg-slate-800/80 transition duration-200 ease-out"
-                            onClick={() => setDisplayResultsWindow(false)}
-                          >
-                            {p?.profile_path ? (
+              {loading && (
+                <div className="flex flex-col justify-center items-center gap-4 h-full">
+                  <CircularProgress />
+                  <p className="text-white">Processing your query</p>
+                </div>
+              )}
+              <div className="flex flex-col gap-10">
+                <div>
+                  {results.movies?.length > 0 && (
+                    <>
+                      <p className="text-white uppercase tracking-wider font-light pl-2 pb-2">
+                        Movies
+                      </p>
+                      <div className="flex flex-col md:flex-row flex-wrap w-full xl:w-1/2">
+                        {results.movies?.map((m, index) => {
+                          return (
+                            <Link
+                              key={index}
+                              href={`/movie/${m?.id}`}
+                              className="relative w-full md:w-1/2 flex gap-3 rounded-sm p-2 cursor-pointer text-white hover:bg-slate-800/80 transition duration-200 ease-out"
+                              onClick={() => setDisplayResultsWindow(false)}
+                            >
                               <Image
-                                src={`https://image.tmdb.org/t/p/w400${p?.profile_path}`}
-                                alt={p?.name || "Profile image"}
-                                className="rounded-md shadow-xl"
+                                src={`https://image.tmdb.org/t/p/w400${m?.poster_path}`}
+                                alt={m?.title || "Movie poster"}
+                                className="rounded-sm"
                                 width={50}
                                 height={100}
                                 priority
                               />
-                            ) : (
-                              <div className="w-[50px] h-[100px] bg-black/70"></div>
-                            )}
+                              <div className="mt-3 text-left">
+                                <p className="font-medium text-sm leading-5 uppercase tracking-wide">
+                                  {m?.title}
+                                </p>
+                                {m?.release_date && (
+                                  <p className="text-[#adff4f] text-xs font-medium uppercase tracking-wider">
+                                    {moment(m?.release_date).format("YYYY")}
+                                  </p>
+                                )}
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
 
-                            <div className="mt-3 mr-1 text-left">
-                              <p className="font-medium text-sm leading-5 uppercase tracking-wide">
-                                {p?.name}
-                              </p>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
+                <div className="flex flex-col">
+                  {results.people.length > 0 && (
+                    <>
+                      <p className="text-white uppercase tracking-wider font-light pl-2 pb-2">
+                        People
+                      </p>
+                      <div className="flex flex-col md:flex-row flex-wrap w-full xl:w-1/2">
+                        {results.people?.map((p, index) => {
+                          return (
+                            <Link
+                              key={index}
+                              href={`/person/${p.id}`}
+                              className="relative w-full md:w-1/2 flex gap-3 rounded-sm p-2 cursor-pointer text-white hover:bg-slate-800/80 transition duration-200 ease-out"
+                              onClick={() => setDisplayResultsWindow(false)}
+                            >
+                              {p?.profile_path ? (
+                                <Image
+                                  src={`https://image.tmdb.org/t/p/w400${p?.profile_path}`}
+                                  alt={p?.name || "Profile image"}
+                                  className="rounded-md shadow-xl"
+                                  width={50}
+                                  height={100}
+                                  priority
+                                />
+                              ) : (
+                                <div className="w-[50px] h-[100px] bg-black/70"></div>
+                              )}
+
+                              <div className="mt-3 mr-1 text-left">
+                                <p className="font-medium text-sm leading-5 uppercase tracking-wide">
+                                  {p?.name}
+                                </p>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-    </header>
-  );
+          )}
+        </div>
+      </header>
+    );
+  }
 };

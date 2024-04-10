@@ -273,32 +273,33 @@ export default function Home() {
   if (error) return <div>Failed to load.</div>;
   if (!data) return <div>Loading...</div>;
 
-  return (
-    <div className="bg-[#192231] font-roboto">
-      <Head>
-        <title>Movies</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
-        <SideMenu selected="home" />
-        <div className="w-full relative">
-          <Header open={open} setOpen={setOpen} />
-          <div className="mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
-            <div
-              className="relative w-full mx-auto flex jusify-center items-center gap-1 py-6 mb-6 bg-black/50"
-              style={{
-                backgroundImage: `url(/images/genres-wallpaper.jpg)`,
-                backgroundSize: "cover",
-                backgroundPosition: "top",
-                backgroundRepeat: "no-repeat",
-                backgroundAttachment:
-                  window?.innerWidth > 500 ? "fixed" : "scroll",
-                minHeight: "300px",
-                width: "100vw",
-              }}
-            >
-              <div className="absolute top-0 left-0 w-screen h-full bg-black/50" />
-              {/* <button className="w-1/4 text-white bg-gray-900 uppercase">
+  if (typeof window !== "undefined") {
+    return (
+      <div className="bg-[#192231] font-roboto">
+        <Head>
+          <title>Movies</title>
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
+        <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
+          <SideMenu selected="home" />
+          <div className="w-full relative">
+            <Header open={open} setOpen={setOpen} />
+            <div className="mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
+              <div
+                className="relative w-full mx-auto flex jusify-center items-center gap-1 py-6 mb-6 bg-black/50"
+                style={{
+                  backgroundImage: `url(/images/genres-wallpaper.jpg)`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "top",
+                  backgroundRepeat: "no-repeat",
+                  backgroundAttachment:
+                    window?.innerWidth > 500 ? "fixed" : "scroll",
+                  minHeight: "300px",
+                  width: "100vw",
+                }}
+              >
+                <div className="absolute top-0 left-0 w-screen h-full bg-black/50" />
+                {/* <button className="w-1/4 text-white bg-gray-900 uppercase">
                 Popular
               </button>
               <button className="w-1/4 h-20 text-white bg-gray-900 uppercase">
@@ -310,54 +311,55 @@ export default function Home() {
               <button className="w-1/4 h-20 text-white bg-gray-900 uppercase">
                 Now Playing
               </button> */}
-              <p className="text-white/90 text-2xl font-semibold tracking-wider uppercase mx-auto z-10">
-                Trending movies
-              </p>
-            </div>
-            {rows}
-            <div className="flex justify-center mx-auto pt-10">
-              <button
-                onClick={() => setSize(size + 1)}
-                disabled={isLoading}
-                className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-gray-400 text-white text-xs px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
-              >
-                {isLoading ? "Loading" : "Load more"}
-              </button>
-            </div>
-          </div>
-          {state.showVideo && (
-            <div className="fixed top-0 left-0 z-50 bg-black/90 backdrop-blur-sm flex justify-center items-center w-full h-screen">
-              <button
-                onClick={() =>
-                  setState((prevState) => ({
-                    ...prevState,
-                    showVideo: false,
-                  }))
-                }
-                className="absolute top-5 right-5 z-10 text-white"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={0.5}
-                  stroke="currentColor"
-                  className="w-12 h-12 text-gray-100"
+                <p className="text-white/90 text-2xl font-semibold tracking-wider uppercase mx-auto z-10">
+                  Trending movies
+                </p>
+              </div>
+              {rows}
+              <div className="flex justify-center mx-auto pt-10">
+                <button
+                  onClick={() => setSize(size + 1)}
+                  disabled={isLoading}
+                  className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-gray-400 text-white text-xs px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18 18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-              <Video options={videoJsOptions} onReady={handlePlayerReady} />
+                  {isLoading ? "Loading" : "Load more"}
+                </button>
+              </div>
             </div>
-          )}
-        </div>
-      </main>
+            {state.showVideo && (
+              <div className="fixed top-0 left-0 z-50 bg-black/90 backdrop-blur-sm flex justify-center items-center w-full h-screen">
+                <button
+                  onClick={() =>
+                    setState((prevState) => ({
+                      ...prevState,
+                      showVideo: false,
+                    }))
+                  }
+                  className="absolute top-5 right-5 z-10 text-white"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={0.5}
+                    stroke="currentColor"
+                    className="w-12 h-12 text-gray-100"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+                <Video options={videoJsOptions} onReady={handlePlayerReady} />
+              </div>
+            )}
+          </div>
+        </main>
 
-      <footer></footer>
-    </div>
-  );
+        <footer></footer>
+      </div>
+    );
+  }
 }
