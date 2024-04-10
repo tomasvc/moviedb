@@ -48,7 +48,7 @@ export const Video = (props: any) => {
 
   return (
     <div data-vjs-player>
-      <div className="w-[50vw] h-[50vh]" ref={videoRef} />
+      <div className="w-screen xl:w-[50vw] h-[50vh]" ref={videoRef} />
     </div>
   );
 };

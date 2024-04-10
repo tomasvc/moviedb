@@ -209,7 +209,6 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
 
     const movies = sections["movie_titles"] || [];
     const people = sections["people"] || [];
-    const genres = sections["movie_genres"] || [];
 
     setParsedOutput({ movies: Array.from(new Set(movies)), people });
   }
@@ -234,10 +233,14 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
   };
 
   return (
-    <header className="fixed w-full backdrop-blur-md border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] to-transparent flex transition-all pl-16 z-40">
+    <header
+      className={`${
+        open ? "backdrop-blur-md" : "backdrop-blur-sm"
+      } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] to-transparent flex transition-all pl-16 z-40`}
+    >
       <div className="flex flex-col justify-between items-center w-full relative px-4 py-[0.7rem]">
         <div className="w-full flex">
-          <div className="flex w-1/2">
+          <div className="flex w-full lg:w-1/2 pr-4 lg:pr-0">
             <button className="text-white z-20 mr-6 py-2">
               <SearchIcon />
             </button>

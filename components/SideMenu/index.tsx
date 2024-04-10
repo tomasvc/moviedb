@@ -4,7 +4,7 @@ import { HomeIcon, FilmIcon, HeartIcon, SettingsIcon } from "../Icons";
 
 export const SideMenu: React.FC<{ selected?: string }> = ({ selected }) => {
   return (
-    <div className="fixed min-h-screen backdrop-blur bg-[#0F1827]/50 z-50 text-white flex flex-col justify-between">
+    <div className="hidden lg:flex fixed min-h-screen backdrop-blur bg-[#0F1827]/50 z-50 text-white flex-col justify-between">
       <div className="flex flex-col">
         <Link
           href="/"

@@ -88,7 +88,19 @@ export default function Home() {
     const setRowBasedOnWidth = () => {
       const width = window.innerWidth;
       const rowLength =
-        width > 2000 ? 10 : width > 1800 ? 8 : width > 1400 ? 6 : 4;
+        width > 2400
+          ? 10
+          : width > 2000
+          ? 7
+          : width > 1700
+          ? 6
+          : width > 1500
+          ? 5
+          : width > 850
+          ? 4
+          : width > 650
+          ? 3
+          : 2;
 
       setState((prevState) => ({ ...prevState, rowLength }));
     };
@@ -147,13 +159,13 @@ export default function Home() {
     { length: Math.ceil(movies.length / state.rowLength) },
     (_, rowIndex) => (
       <div key={`${rowIndex}-${state.rowLength}`}>
-        <div className="flex justify-start px-20 w-[80%] mx-auto">
+        <div className="flex justify-start w-fit mx-auto">
           {movies
             .slice(rowIndex * state.rowLength, (rowIndex + 1) * state.rowLength)
             .map((movie, index) => (
               <div
                 key={movie.id}
-                className="cursor-pointer"
+                className="w-1/2 lg:w-auto cursor-pointer flex"
                 onClick={() =>
                   setState((prevState) => ({
                     ...prevState,
@@ -196,9 +208,9 @@ export default function Home() {
               }}
             >
               <div className="absolute w-full h-full bg-black opacity-40 top-0 left-0 shadow-inner" />
-              <div className="max-w-2xl xl:max-w-6xl h-full mx-auto flex items-center">
+              <div className="px-4 lg:px-0 max-w-2xl xl:max-w-6xl h-full mx-auto flex flex-col lg:flex-row items-center">
                 <div className="flex flex-col text-white">
-                  <h1 className="text-3xl xl:text-5xl uppercase tracking-wider font-semibold w-1/2 z-10">
+                  <h1 className="text-3xl xl:text-5xl uppercase tracking-wider font-semibold w-full lg:w-1/2 z-10">
                     {movies[state.selectedMovieIndex].original_title}
                   </h1>
                   <div className="flex items-center gap-3 mt-3 uppercase text-sm z-10">
@@ -219,7 +231,7 @@ export default function Home() {
                         .join(", ")}
                     </p>
                   </div>
-                  <p className="mt-6 w-1/2 leading-7 text-[0.9rem] z-10">
+                  <p className="mt-6 w-full lg:w-1/2 leading-7 text-[0.9rem] z-10">
                     {movies[state.selectedMovieIndex].overview}
                   </p>
                   <button
@@ -233,9 +245,9 @@ export default function Home() {
                     Full info
                   </button>
                 </div>
-                <div className="text-white w-1/2 flex flex-col items-center justify-center z-20">
+                <div className="text-white w-full lg:w-1/2 flex items-center justify-left lg:justify-center mt-6 lg:mt-0 z-20">
                   <button
-                    className="flex flex-col items-center"
+                    className="flex flex-row lg:flex-col gap-2 lg:gap-0 items-center"
                     onClick={() =>
                       setState((prevState) => ({
                         ...prevState,
@@ -244,7 +256,7 @@ export default function Home() {
                     }
                   >
                     <PlayIcon />
-                    <p className="uppercase font-medium text-sm mt-2 z-10">
+                    <p className="uppercase font-medium text-sm lg:mt-2 z-10">
                       Play trailer
                     </p>
                   </button>

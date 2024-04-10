@@ -1316,6 +1316,10 @@ input[type="range"]::-ms-fill-lower {
   height: inherit;
 }
 
+.h-10 {
+  height: 2.5rem;
+}
+
 .max-h-40 {
   max-height: 10rem;
 }
@@ -1505,12 +1509,24 @@ input[type="range"]::-ms-fill-lower {
   width: 25px;
 }
 
+.w-10 {
+  width: 2.5rem;
+}
+
 .max-w-2xl {
   max-width: 42rem;
 }
 
 .max-w-\[150px\] {
   max-width: 150px;
+}
+
+.max-w-\[180px\] {
+  max-width: 180px;
+}
+
+.max-w-\[200px\] {
+  max-width: 200px;
 }
 
 .origin-top-right {
@@ -2267,6 +2283,11 @@ input[type="range"]::-ms-fill-lower {
   padding-bottom: 0.3rem;
 }
 
+.px-0 {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
 .pb-1 {
   padding-bottom: 0.25rem;
 }
@@ -2381,6 +2402,10 @@ input[type="range"]::-ms-fill-lower {
 
 .pl-12 {
   padding-left: 3rem;
+}
+
+.pr-4 {
+  padding-right: 1rem;
 }
 
 .text-left {
@@ -2943,6 +2968,22 @@ body {
     margin-right: auto;
   }
 
+  .lg\:mt-0 {
+    margin-top: 0px;
+  }
+
+  .lg\:mt-2 {
+    margin-top: 0.5rem;
+  }
+
+  .lg\:flex {
+    display: flex;
+  }
+
+  .lg\:h-20 {
+    height: 5rem;
+  }
+
   .lg\:w-1\/3 {
     width: 33.333333%;
   }
@@ -2963,6 +3004,18 @@ body {
     width: 50%;
   }
 
+  .lg\:w-\[80\%\] {
+    width: 80%;
+  }
+
+  .lg\:w-20 {
+    width: 5rem;
+  }
+
+  .lg\:w-auto {
+    width: auto;
+  }
+
   .lg\:flex-row {
     flex-direction: row;
   }
@@ -2971,8 +3024,34 @@ body {
     flex-direction: column;
   }
 
+  .lg\:justify-center {
+    justify-content: center;
+  }
+
+  .lg\:gap-0 {
+    gap: 0px;
+  }
+
+  .lg\:p-4 {
+    padding: 1rem;
+  }
+
+  .lg\:px-20 {
+    padding-left: 5rem;
+    padding-right: 5rem;
+  }
+
+  .lg\:px-0 {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+
   .lg\:pl-0 {
     padding-left: 0px;
+  }
+
+  .lg\:pr-0 {
+    padding-right: 0px;
   }
 }
 
@@ -2993,6 +3072,14 @@ body {
     width: 66.666667%;
   }
 
+  .xl\:w-\[80\%\] {
+    width: 80%;
+  }
+
+  .xl\:w-\[50vw\] {
+    width: 50vw;
+  }
+
   .xl\:max-w-6xl {
     max-width: 72rem;
   }
@@ -3009,6 +3096,11 @@ body {
   .xl\:py-32 {
     padding-top: 8rem;
     padding-bottom: 8rem;
+  }
+
+  .xl\:px-20 {
+    padding-left: 5rem;
+    padding-right: 5rem;
   }
 
   .xl\:pl-0 {
