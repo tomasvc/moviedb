@@ -237,9 +237,10 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
       className={`${
         open ? "backdrop-blur-md" : "backdrop-blur-sm"
       } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${
-        (window.innerWidth > 500 && !open) || (window.innerWidth < 500 && !open)
+        (window?.innerWidth > 500 && !open) ||
+        (window?.innerWidth < 500 && !open)
           ? "to-transparent"
-          : window.innerWidth < 500 && open
+          : window?.innerWidth < 500 && open
           ? "to-[#090e17]/80"
           : "to-transparent"
       } flex transition-all pl-0 xl:pl-16 z-40`}

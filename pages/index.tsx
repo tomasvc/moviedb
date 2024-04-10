@@ -204,7 +204,7 @@ export default function Home() {
                 backgroundPosition: "top",
                 backgroundRepeat: "no-repeat",
                 backgroundAttachment:
-                  window.innerWidth > 500 ? "fixed" : "scroll",
+                  window?.innerWidth > 500 ? "fixed" : "scroll",
                 minHeight: "400px",
                 width: "100vw",
               }}
@@ -292,7 +292,7 @@ export default function Home() {
                 backgroundPosition: "top",
                 backgroundRepeat: "no-repeat",
                 backgroundAttachment:
-                  window.innerWidth > 500 ? "fixed" : "scroll",
+                  window?.innerWidth > 500 ? "fixed" : "scroll",
                 minHeight: "300px",
                 width: "100vw",
               }}
