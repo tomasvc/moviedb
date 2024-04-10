@@ -209,7 +209,7 @@ export default function Home() {
                 width: "100vw",
               }}
             >
-              <div className="absolute w-full h-full bg-black opacity-40 top-0 left-0 shadow-inner" />
+              <div className="absolute w-full h-full bg-black opacity-60 top-0 left-0 shadow-inner" />
               <div className="px-4 lg:px-0 max-w-2xl xl:max-w-6xl h-full mx-auto flex flex-col lg:flex-row items-center">
                 <div className="flex flex-col text-white">
                   <h1 className="text-3xl xl:text-5xl uppercase tracking-wider font-semibold w-full lg:w-1/2 z-10">
@@ -233,7 +233,7 @@ export default function Home() {
                         .join(", ")}
                     </p>
                   </div>
-                  <p className="mt-6 w-full lg:w-1/2 leading-7 text-[0.9rem] z-10">
+                  <p className="mt-6 w-full lg:w-1/2 leading-6 md:leading-7 text-xs md:text-[0.9rem] z-10">
                     {movies[state.selectedMovieIndex].overview}
                   </p>
                   <button

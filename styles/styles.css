@@ -1709,6 +1709,10 @@ input[type="range"]::-ms-fill-lower {
   gap: 0.125rem;
 }
 
+.gap-y-0 {
+  row-gap: 0px;
+}
+
 .divide-y > :not([hidden]) ~ :not([hidden]) {
   --tw-divide-y-reverse: 0;
   border-top-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
@@ -1752,6 +1756,10 @@ input[type="range"]::-ms-fill-lower {
 
 .text-ellipsis {
   text-overflow: ellipsis;
+}
+
+.whitespace-normal {
+  white-space: normal;
 }
 
 .whitespace-nowrap {
@@ -2481,6 +2489,14 @@ input[type="range"]::-ms-fill-lower {
   padding-left: 1rem;
 }
 
+.pb-12 {
+  padding-bottom: 3rem;
+}
+
+.pt-24 {
+  padding-top: 6rem;
+}
+
 .text-left {
   text-align: left;
 }
@@ -2757,6 +2773,14 @@ input[type="range"]::-ms-fill-lower {
 
 .opacity-40 {
   opacity: 0.4;
+}
+
+.opacity-50 {
+  opacity: 0.5;
+}
+
+.opacity-60 {
+  opacity: 0.6;
 }
 
 .\!shadow-lg {
@@ -3050,6 +3074,14 @@ body {
     font-size: 0.75rem;
     line-height: 1rem;
   }
+
+  .md\:text-\[0\.9rem\] {
+    font-size: 0.9rem;
+  }
+
+  .md\:leading-7 {
+    line-height: 1.75rem;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -3174,6 +3206,15 @@ body {
   .lg\:text-base {
     font-size: 1rem;
     line-height: 1.5rem;
+  }
+
+  .lg\:text-\[0\.9rem\] {
+    font-size: 0.9rem;
+  }
+
+  .lg\:text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 
   .lg\:leading-7 {
