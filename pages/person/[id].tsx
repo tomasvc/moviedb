@@ -78,19 +78,19 @@ export default function PersonPage() {
     <div className="bg-[#192231] text-gray-100">
       <Header open={open} setOpen={setOpen} />
       <main
-        className={clsx("w-full min-h-screen mx-4 lg:mx-auto transition-all", {
+        className={clsx("w-full min-h-screen px-4 lg:mx-auto transition-all", {
           "blur-md": open,
         })}
       >
         <SideMenu />
-        <div className="flex gap-8 w-full lg:w-3/4 2xl:w-1/2 mx-auto py-8 pt-20">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-8 w-full lg:w-3/4 2xl:w-1/2 mx-auto py-8 pt-20">
           {externals && person && (
-            <div className="w-1/4">
+            <div className="w-full sm:w-3/4 lg:w-1/4 mx-auto">
               <img
-                className="rounded-md shadow-lg"
+                className="rounded-md shadow-lg w-1/2 lg:w-full mx-auto lg:mx-0"
                 src={`https://image.tmdb.org/t/p/w400${person?.profile_path}`}
               />
-              <div className="my-8 flex gap-3">
+              <div className="my-4 flex gap-3 justify-center lg:justify-left">
                 {externals?.instagram_id && (
                   <a
                     href={`https://instagram.com/${externals?.instagram_id}`}
@@ -110,46 +110,52 @@ export default function PersonPage() {
                   </a>
                 )}
               </div>
-              <h2 className="my-4 text-lg font-medium">Personal Info</h2>
-              <div className="mb-4 text-sm">
-                <label className="font-semibold">Known For</label>
-                <p>{person?.known_for_department}</p>
-              </div>
-              <div className="mb-4 text-sm">
-                <label className="font-semibold">Gender</label>
-                <p>{person?.gender === 2 ? "Male" : "Female"}</p>
-              </div>
-              <div className="mb-4 text-sm">
-                <label className="font-semibold">Birthday</label>
-                <p>{moment(person?.birthday).format("MMMM D, YYYY")}</p>
-              </div>
-              {person?.deathday && (
+              <div className="hidden lg:flex flex-col">
+                <h2 className="mb-4 text-lg font-medium">Personal Info</h2>
                 <div className="mb-4 text-sm">
-                  <label className="font-semibold">Death day</label>
-                  <p>{moment(person?.deathday).format("MMMM DD, YYYY")}</p>
+                  <label className="font-semibold">Known For</label>
+                  <p>{person?.known_for_department}</p>
                 </div>
-              )}
-              <div className="mb-4 text-sm">
-                <label className="font-semibold">Place of Birth</label>
-                <p>{person?.place_of_birth}</p>
-              </div>
-              {person?.also_known_as?.length > 0 && (
                 <div className="mb-4 text-sm">
-                  <label className="font-semibold">Also Known As</label>
-                  {person?.also_known_as?.map((item, index) => {
-                    return <p key={index}>{item}</p>;
-                  })}
+                  <label className="font-semibold">Gender</label>
+                  <p>{person?.gender === 2 ? "Male" : "Female"}</p>
                 </div>
-              )}
+                <div className="mb-4 text-sm">
+                  <label className="font-semibold">Birthday</label>
+                  <p>{moment(person?.birthday).format("MMMM D, YYYY")}</p>
+                </div>
+                {person?.deathday && (
+                  <div className="mb-4 text-sm">
+                    <label className="font-semibold">Death day</label>
+                    <p>{moment(person?.deathday).format("MMMM DD, YYYY")}</p>
+                  </div>
+                )}
+                <div className="mb-4 text-sm">
+                  <label className="font-semibold">Place of Birth</label>
+                  <p>{person?.place_of_birth}</p>
+                </div>
+                {person?.also_known_as?.length > 0 && (
+                  <div className="mb-4 text-sm">
+                    <label className="font-semibold">Also Known As</label>
+                    {person?.also_known_as?.map((item, index) => {
+                      return <p key={index}>{item}</p>;
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
-          <div className="w-3/4">
+          <div className="w-full lg:w-3/4">
             {person && (
               <div>
-                <h1 className="text-3xl font-bold mb-4">{person?.name}</h1>
-                <h2 className="text-xl font-medium mb-2">Biography</h2>
+                <h1 className="text-2xl lg:text-3xl font-bold mb-4">
+                  {person?.name}
+                </h1>
+                <h2 className="text-lg lg:text-xl font-medium mb-2">
+                  Biography
+                </h2>
                 <div
-                  className="font-light"
+                  className="font-light text-xs lg:text-sm leading-5 lg:leading-6"
                   dangerouslySetInnerHTML={{
                     __html: person?.biography.replace(
                       /(?:\r\n|\r|\n)/g,
@@ -192,7 +198,7 @@ export default function PersonPage() {
                 credits[0]?.map((item, index) => {
                   return (
                     <div key={index} className="flex gap-1 p-4">
-                      <p>
+                      <p className="text-xs lg:text-sm">
                         {item.release_date || item.first_air_date
                           ? moment(
                               item.release_date || item.first_air_date
@@ -203,10 +209,10 @@ export default function PersonPage() {
                         onClick={() => router.push(`/movie/${item.id}`)}
                         onMouseEnter={() => handleMouseEnter(index)}
                         onMouseLeave={handleMouseLeave}
-                        className="relative ml-6 font-medium cursor-pointer"
+                        className="relative ml-6 font-medium cursor-pointer text-xs lg:text-sm"
                       >
                         {item.original_title || item.title || item.name}
-                        {hoveredIndex === index && (
+                        {hoveredIndex === index && window.innerWidth > 500 && (
                           <Transition
                             show={hoveredIndex === index}
                             enter="transition-opacity duration-200"
@@ -228,7 +234,9 @@ export default function PersonPage() {
                         )}
                       </div>
                       {item.character && (
-                        <p className="font-light">as {item.character}</p>
+                        <p className="font-light text-xs lg:text-sm">
+                          as {item.character}
+                        </p>
                       )}
                     </div>
                   );
