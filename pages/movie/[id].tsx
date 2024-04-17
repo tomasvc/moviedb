@@ -1,10 +1,9 @@
-import { GetStaticPaths, GetStaticProps } from "next";
+import { GetStaticProps } from "next";
 import { fetchMovieDetails, api } from "../../api";
 import { useState, useEffect } from "react";
 import { SideMenu } from "../../components/SideMenu";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import Image from "next/image";
 import { Header } from "../../components/Header";
 import { MovieItem } from "../../components/MovieItem";
 import { useHeaderContext } from "../../contexts/headerContext";
@@ -161,9 +160,7 @@ export default function Movie({ movie }) {
                                 key={index}
                                 className="whitespace-nowrap text-sm lg:text-base"
                               >
-                                {!isLastItem && (
-                                  <span className="font-bold">,</span>
-                                )}
+                                {!isLastItem && <span>,</span>}
                                 {item.name}
                               </button>
                             );
@@ -192,9 +189,7 @@ export default function Movie({ movie }) {
                                 className="whitespace-nowrap text-sm lg:text-base"
                               >
                                 {item.name}
-                                {!isLastItem && (
-                                  <span className="font-bold">,</span>
-                                )}
+                                {!isLastItem && <span>,</span>}
                               </button>
                             );
                           })}
@@ -222,9 +217,7 @@ export default function Movie({ movie }) {
                                 className="whitespace-nowrap text-sm lg:text-base"
                               >
                                 {item.name}
-                                {!isLastItem && (
-                                  <span className="font-bold">,</span>
-                                )}
+                                {!isLastItem && <span>,</span>}
                               </button>
                             );
                           })}

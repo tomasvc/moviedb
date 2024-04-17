@@ -332,6 +332,7 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
                                 className="rounded-sm"
                                 width={50}
                                 height={100}
+                                unoptimized={true}
                                 priority
                               />
                               <div className="mt-3 text-left">
@@ -374,6 +375,7 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
                                   className="rounded-md shadow-xl"
                                   width={50}
                                   height={100}
+                                  unoptimized={true}
                                   priority
                                 />
                               ) : (

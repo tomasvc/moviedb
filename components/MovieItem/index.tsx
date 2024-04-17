@@ -25,6 +25,7 @@ export const MovieItem: React.FC<MovieItemProps> = ({
         className="max-w-[180px] w-full rounded-md shadow-xl"
         width={500}
         height={300}
+        unoptimized={true}
         priority
       />
       <div className="mt-3 mr-1 text-left">

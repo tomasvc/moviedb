@@ -12,7 +12,6 @@ import { SideMenu } from "../../components/SideMenu";
 import { InstagramIcon, ImdbIcon } from "../../components/Icons";
 import { useHeaderContext } from "../../contexts/headerContext";
 import { Transition } from "@headlessui/react";
-import Image from "next/image";
 import clsx from "clsx";
 import moment from "moment";
 

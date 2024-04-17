@@ -14,6 +14,7 @@ module.exports = {
                 protocol: 'https',
                 hostname: 'image.tmdb.org',
             }
-        ]
+        ],
+        unoptimized: false
     }
   }
