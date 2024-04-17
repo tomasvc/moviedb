@@ -41,6 +41,7 @@ export default function Movie({ movie }) {
   const { data: similar } = useSWR(api.recommendations(id as string), fetcher);
 
   const { open, setOpen } = useHeaderContext();
+  const [isClient, setIsClient] = useState(false);
   const [awards, setAwards] = useState("");
   const [showFullComment, setShowFullComment] = useState(false);
 
@@ -49,6 +50,10 @@ export default function Movie({ movie }) {
       credits?.crew?.filter((item: any) => item.job === keyword).length > 0
     );
   };
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     async function awardSearch(movie: string) {
@@ -70,7 +75,7 @@ export default function Movie({ movie }) {
     movie && awardSearch(movie.title || movie.name || movie.original_title);
   }, [movie]);
 
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && isClient) {
     return (
       <div className="bg-[#192231]-50 overflow-x-hidden">
         <Header open={open} setOpen={setOpen} transparent />
@@ -107,7 +112,10 @@ export default function Movie({ movie }) {
                     {movie?.title || movie?.name || movie?.original_title}
                   </h1>
                   <div className="flex gap-4 mt-2 uppercase font-bold tracking-wider text-sm">
-                    <p className="text-[#adff4f] font-bold uppercase tracking-wider pb-1">
+                    <p
+                      className="text-[#adff4f] font-bold uppercase tracking-wider pb-1"
+                      suppressHydrationWarning
+                    >
                       {moment(movie?.release_date).format("YYYY")}
                     </p>
                     <div className="flex flex-wrap">
@@ -314,7 +322,10 @@ export default function Movie({ movie }) {
                             <p>{reviews?.results[0]?.author_details?.rating}</p>
                           </div>
                         </div>
-                        <p className="text-sm font-light text-gray-400">
+                        <p
+                          className="text-sm font-light text-gray-400"
+                          suppressHydrationWarning
+                        >
                           Written by {reviews?.results[0]?.author} on{" "}
                           {moment(reviews?.results[0]?.created_at).format(
                             "MMMM d, YYYY"

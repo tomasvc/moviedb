@@ -10,6 +10,7 @@ import { Video } from "../components/Video";
 import useSWRInfinite from "swr/infinite";
 import axios from "axios";
 import Head from "next/head";
+import Link from "next/link";
 import moment from "moment";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
@@ -216,7 +217,7 @@ export default function Home() {
                     {movies[state.selectedMovieIndex].original_title}
                   </h1>
                   <div className="flex items-center gap-3 mt-3 uppercase text-sm z-10">
-                    <p>
+                    <p suppressHydrationWarning>
                       {moment(
                         movies[state.selectedMovieIndex].release_date
                       ).format("YYYY")}
@@ -236,16 +237,12 @@ export default function Home() {
                   <p className="mt-6 w-full lg:w-1/2 leading-6 md:leading-7 text-xs md:text-[0.9rem] z-10">
                     {movies[state.selectedMovieIndex].overview}
                   </p>
-                  <button
-                    onClick={() =>
-                      router.push(
-                        `/movie/${movies[state.selectedMovieIndex].id}`
-                      )
-                    }
+                  <Link
+                    href={`/movie/${movies[state.selectedMovieIndex].id}`}
                     className="mt-8 px-4 py-2 uppercase text-xs tracking-wide rounded-sm bg-[#5937ef] hover:bg-[#6b4aff] text-white font-semibold w-fit cursor-pointer z-10 transition"
                   >
                     Full info
-                  </button>
+                  </Link>
                 </div>
                 <div className="text-white w-full lg:w-1/2 flex items-center justify-left lg:justify-center mt-6 lg:mt-0 z-20">
                   <button
