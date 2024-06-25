@@ -31,11 +31,16 @@ module.exports = {
           '0%': { transform: 'translateY(-20px)', opacity: 0 },
           '100%': { transform: 'translateY(0px)', opacity: 100 },
         },
+        fadeInScaleUp: {
+          '0%': { transform: 'scale(0.9)', opacity: 0 },
+          '100%': { transform: 'scale(1)', opacity: 100 },
+        },
       },
       animation: {
         fadeLeft: 'fadeLeft 0.2s ease-in-out',
         fadeUp: 'fadeUp 0.25s ease-in-out',
         fadeInDown: 'fadeInDown 0.2s ease',
+        fadeInScaleUp: 'fadeInScaleUp 0.3s ease-in-out',
         expand: 'expand 0.25s ease-in-out'
       },
     },

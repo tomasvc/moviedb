@@ -1,11 +1,10 @@
 import { useEffect, useState, useRef } from "react";
-import { fetchMovies, fetchMovieGenres, fetchMovieVideos } from "../api";
+import { fetchMovieGenres, fetchMovieVideos } from "../api";
 import { MovieItem } from "../components/MovieItem";
 import { Header } from "../components/Header";
 import { useHeaderContext } from "../contexts/headerContext";
 import { SideMenu } from "../components/SideMenu";
 import { PlayIcon } from "../components/Icons";
-import { useRouter } from "next/router";
 import { Video } from "../components/Video";
 import useSWRInfinite from "swr/infinite";
 import axios from "axios";
@@ -14,18 +13,9 @@ import Link from "next/link";
 import moment from "moment";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
-import wallpaper from "../assets/img/genres-wallpaper.jpg";
 
 const fetcher = (url: string): Promise<any> =>
   axios.get(url).then((res) => res.data);
-
-function useLoadMorePages(initialSize = 1, increment = 2) {
-  const [pageSize, setPageSize] = useState(initialSize);
-
-  const loadMore = () => setPageSize((prevSize) => prevSize + increment);
-
-  return [pageSize, loadMore];
-}
 
 export default function Home() {
   const [state, setState] = useState({
@@ -38,11 +28,9 @@ export default function Home() {
     selectedList: "Popular",
     loadedPages: 0,
   });
-  const [pageSize, loadMore] = useLoadMorePages(2, 2);
   const { open, setOpen } = useHeaderContext();
   const playerRef = useRef(null);
   const loadedPagesRef = useRef(state.loadedPages);
-  const router = useRouter();
   const [videoJsOptions, setVideoJsOptions] = useState({
     autoplay: false,
     controls: true,
@@ -272,7 +260,7 @@ export default function Home() {
 
   if (typeof window !== "undefined") {
     return (
-      <div className="bg-[#192231] font-roboto">
+      <div className="bg-[#192231] font-roboto overflow-x-hidden">
         <Head>
           <title>Movies</title>
           <link rel="icon" href="/favicon.ico" />
@@ -296,20 +284,11 @@ export default function Home() {
                 }}
               >
                 <div className="absolute top-0 left-0 w-screen h-full bg-black/50" />
-                {/* <button className="w-1/4 text-white bg-gray-900 uppercase">
-                Popular
-              </button>
-              <button className="w-1/4 h-20 text-white bg-gray-900 uppercase">
-                Top Rated
-              </button>
-              <button className="w-1/4 h-20 text-white bg-gray-900 uppercase">
-                Upcoming
-              </button>
-              <button className="w-1/4 h-20 text-white bg-gray-900 uppercase">
-                Now Playing
-              </button> */}
-                <p className="text-white/90 text-2xl font-semibold tracking-wider uppercase mx-auto z-10">
-                  Trending movies
+                <p className="text-white text-5xl font-semibold tracking-wider uppercase mx-auto z-10">
+                  <span className="text-[#5937ef] font-black relative bottom-0.5">
+                    /
+                  </span>{" "}
+                  Trending
                 </p>
               </div>
               {rows}
@@ -317,14 +296,14 @@ export default function Home() {
                 <button
                   onClick={() => setSize(size + 1)}
                   disabled={isLoading}
-                  className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-gray-400 text-white text-xs px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
+                  className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-gray-400 text-white text-xs font-medium px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
                 >
-                  {isLoading ? "Loading" : "Load more"}
+                  {isLoading ? "Loading" : "Show more"}
                 </button>
               </div>
             </div>
             {state.showVideo && (
-              <div className="fixed top-0 left-0 z-50 bg-black/90 backdrop-blur-sm flex justify-center items-center w-full h-screen">
+              <div className="fixed top-0 left-0 z-50 bg-black/90 backdrop-blur-sm flex justify-center items-center w-full h-screen animate-fadeInScaleUp transition-all">
                 <button
                   onClick={() =>
                     setState((prevState) => ({

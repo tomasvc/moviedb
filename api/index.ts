@@ -7,9 +7,7 @@ export const fetcher = async (url: string) => {
     return response.data;
   } catch (error) {
     if (error.response) {
-      console.error("Error data:", error.response.data);
-      console.error("Error status:", error.response.status);
-      console.error("Error headers:", error.response.headers);
+        console.error("Error response:", error.response);
       throw new Error(`Data fetching failed with status ${error.response.status}`);
     } else if (error.request) {
       console.error("Error request:", error.request);
@@ -27,6 +25,7 @@ export const api = {
     trendingMovies: `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`,
     multiSearch: `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`,
     movieGenres: `https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`,
+    movie: (id: string) => `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&language=en-US`,
     credits: (id: string) => `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${API_KEY}&language=en-US`,
     reviews: (id: string) => `https://api.themoviedb.org/3/movie/${id}/reviews?api_key=${API_KEY}&language=en-US`,
     keywords: (id: string) => `https://api.themoviedb.org/3/movie/${id}/keywords?api_key=${API_KEY}&language=en-US`,

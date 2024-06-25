@@ -1,5 +1,4 @@
 import React from "react";
-import { useRouter } from "next/router";
 import moment from "moment";
 import Image from "next/image";
 
@@ -16,17 +15,22 @@ export const MovieItem: React.FC<MovieItemProps> = ({
   name,
   release,
 }) => {
-  const router = useRouter();
+  const handleImageLoad = (event: any) => {
+    event.classList.remove("image-loading");
+    event.classList.add("image-loaded");
+  };
+
   return (
-    <div className="relative flex flex-col w-full max-w-[180px] rounded-sm cursor-pointer text-white">
+    <div className="relative flex flex-col w-full max-w-[180px] rounded-sm cursor-pointer text-white animate-fadeUp">
       <Image
         src={`https://image.tmdb.org/t/p/w400${poster}`}
         alt={name}
-        className="max-w-[180px] w-full rounded-md shadow-xl"
+        className="max-w-[180px] w-full rounded-md shadow-xl transition-all"
         width={500}
         height={300}
         unoptimized={true}
         priority
+        onLoadingComplete={handleImageLoad}
       />
       <div className="mt-3 mr-1 text-left">
         <p className="font-medium text-sm leading-5 uppercase tracking-wide">

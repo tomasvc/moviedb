@@ -1,5 +1,4 @@
-import { GetStaticProps } from "next";
-import { fetchMovieDetails, api } from "../../api";
+import { api } from "../../api";
 import { useState, useEffect } from "react";
 import { SideMenu } from "../../components/SideMenu";
 import { useRouter } from "next/router";
@@ -19,22 +18,11 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true,
 });
 
-export const getServerSideProps = (async (context) => {
-  const { id } = context.params as { id: string };
-
-  const movie = await fetchMovieDetails(id);
-
-  return {
-    props: {
-      movie,
-    },
-  };
-}) satisfies GetStaticProps;
-
-export default function Movie({ movie }) {
+export default function Movie() {
   const router = useRouter();
   const { id } = router.query;
 
+  const { data: movie } = useSWR(api.movie(id as string), fetcher);
   const { data: credits } = useSWR(api.credits(id as string), fetcher);
   const { data: reviews } = useSWR(api.reviews(id as string), fetcher);
   const { data: keywords } = useSWR(api.keywords(id as string), fetcher);
