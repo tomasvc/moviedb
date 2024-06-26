@@ -44,6 +44,15 @@ export default function Home() {
     ],
   });
 
+  useEffect(() => {
+    async function fetchData() {
+      const movieGenres = await fetchMovieGenres();
+      setState((prevState) => ({ ...prevState, genres: movieGenres.genres }));
+    }
+
+    fetchData();
+  }, []);
+
   const handlePlayerReady = (player) => {
     playerRef.current = player;
 
@@ -101,14 +110,6 @@ export default function Home() {
       window.removeEventListener("resize", setRowBasedOnWidth, false);
     };
   }, [setSize]);
-
-  useEffect(() => {
-    async function fetchData() {
-      const movieGenres = await fetchMovieGenres();
-      setState((prevState) => ({ ...prevState, genres: movieGenres.genres }));
-    }
-    fetchData();
-  }, []);
 
   useEffect(() => {
     async function fetchVideos() {
@@ -171,7 +172,7 @@ export default function Home() {
                   <MovieItem
                     id={movie.id}
                     poster={movie.poster_path}
-                    name={movie.original_title}
+                    name={movie.title || movie.name || movie.original_title}
                     release={movie.release_date}
                     rating={movie.vote_average}
                   />
@@ -184,13 +185,12 @@ export default function Home() {
           Math.floor(state.selectedMovieIndex / state.rowLength) ===
             rowIndex && (
             <div
-              className="relative w-full min-h-[50vh] py-14 xl:py-32 shadow-inner animate-fadeUp transition-all duration-300"
+              className="relative w-full min-h-[50vh] py-14 xl:py-32 shadow-inner transition-all duration-300 animate-fadeIn"
               style={{
                 backgroundImage: `url(https://image.tmdb.org/t/p/original${
                   movies[state.selectedMovieIndex]?.backdrop_path
                 })`,
                 backgroundSize: "cover",
-                backgroundPosition: "top",
                 backgroundRepeat: "no-repeat",
                 backgroundAttachment:
                   window?.innerWidth > 500 ? "fixed" : "scroll",
@@ -202,7 +202,9 @@ export default function Home() {
               <div className="px-4 lg:px-0 max-w-2xl xl:max-w-6xl h-full mx-auto flex flex-col lg:flex-row items-center">
                 <div className="flex flex-col text-white">
                   <h1 className="text-3xl xl:text-5xl uppercase tracking-wider font-semibold w-full lg:w-1/2 z-10">
-                    {movies[state.selectedMovieIndex].original_title}
+                    {movies[state.selectedMovieIndex].title ||
+                      movies[state.selectedMovieIndex].name ||
+                      movies[state.selectedMovieIndex].original_title}
                   </h1>
                   <div className="flex items-center gap-3 mt-3 uppercase text-sm z-10">
                     <p suppressHydrationWarning>
