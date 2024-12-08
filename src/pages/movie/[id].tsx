@@ -367,11 +367,9 @@ export default function Movie() {
                         >
                           <MovieItem
                             key={index}
-                            id={item.id}
                             poster={item.poster_path}
                             name={item.original_title}
                             release={item.release_date}
-                            rating={item.rating}
                           />
                         </Link>
                       );
