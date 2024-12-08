@@ -1,45 +1,53 @@
-"use client";
 import moment from "moment";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
+import { getPlaiceholder } from "plaiceholder";
 
 export const MovieItem = ({ poster, name, release }) => {
-  const [plaiceholder, setPlaiceholder] = useState<{ base64: string } | null>(
-    null
-  );
+  // const [plaiceholder, setPlaiceholder] = useState<{ base64: string } | null>(
+  //   null
+  // );
 
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.3,
   });
 
-  useEffect(() => {
-    const fetchPlaiceholder = async () => {
-      if (poster) {
-        try {
-          const response = await fetch(
-            `/api/getPlaceholder?poster=${
-              "https://image.tmdb.org/t/p/w400" + poster
-            }`
-          );
-          const plaiceholderData = await response.json();
-          setPlaiceholder(plaiceholderData);
-        } catch (error) {
-          console.error("Failed to fetch placeholder:", error);
-        }
-      }
-    };
+  // const src = `https://image.tmdb.org/t/p/w400${poster}`;
 
-    fetchPlaiceholder();
-  }, [poster]);
+  // const buffer = await fetch(src).then(async (res) => {
+  //   return Buffer.from(await res.arrayBuffer());
+  // });
+
+  // const { base64 } = await getPlaiceholder(buffer);
+
+  // useEffect(() => {
+  //   const fetchPlaiceholder = async () => {
+  //     if (poster) {
+  //       try {
+  //         const response = await fetch(
+  //           `/api/getPlaceholder?poster=${
+  //             "https://image.tmdb.org/t/p/w400" + poster
+  //           }`
+  //         );
+  //         const plaiceholderData = await response.json();
+  //         setPlaiceholder(plaiceholderData);
+  //       } catch (error) {
+  //         console.error("Failed to fetch placeholder:", error);
+  //       }
+  //     }
+  //   };
+
+  //   fetchPlaiceholder();
+  // }, [poster]);
 
   return (
     <div
       ref={ref}
       className="relative flex flex-col rounded-sm cursor-pointer text-white animate-fadeUp"
     >
-      {plaiceholder ? (
+      {poster ? (
         <Image
           src={`https://image.tmdb.org/t/p/w400${poster}`}
           alt={name}
@@ -50,8 +58,8 @@ export const MovieItem = ({ poster, name, release }) => {
           }}
           width={180}
           height={270}
-          placeholder="blur"
-          blurDataURL={plaiceholder?.base64 || ""}
+          // placeholder="blur"
+          // blurDataURL={base64 || ""}
           priority
         />
       ) : (
