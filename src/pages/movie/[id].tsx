@@ -408,6 +408,7 @@ export default function Movie({
                           key={index}
                         >
                           <MovieItem
+                            id={item.id}
                             poster={item.poster_path}
                             name={item.original_title}
                             release={item.release_date}

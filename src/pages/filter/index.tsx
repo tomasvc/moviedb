@@ -132,6 +132,7 @@ export default function Filter() {
                 return (
                   <Link href={`/movie/${item.id}`} key={index}>
                     <MovieItem
+                      id={item.id}
                       poster={item.poster_path}
                       name={item.title || item.original_title || item.name}
                       release={item.release_date}
