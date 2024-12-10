@@ -133,8 +133,8 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
         console.log(parsedOutput);
         parsedOutput.movies.map((m) => console.log(m.title));
         const promises = [
-          ...parsedOutput.movies.map((m) => movieSearch(m)),
-          ...parsedOutput.people.map((p) => personSearch(p)),
+          ...parsedOutput.movies.map((m) => movieSearch(m as any)),
+          ...parsedOutput.people.map((p) => personSearch(p as any)),
         ];
         const data = await Promise.all(promises);
         return data.filter((result) => result !== null);
