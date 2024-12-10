@@ -1,5 +1,8 @@
 {
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
@@ -31,6 +34,7 @@
     "moment": "^2.29.4",
     "next": "latest",
     "next-auth": "^4.22.1",
+    "nextjs-progressbar": "^0.0.16",
     "openai": "^4.32.1",
     "plaiceholder": "^3.0.0",
     "react": "^18.2.0",

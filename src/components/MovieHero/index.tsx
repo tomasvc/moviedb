@@ -14,44 +14,14 @@ type MovieItemProps = {
 };
 
 export const MovieHero = ({ movie, genres, setState }) => {
-  const [plaiceholder, setPlaiceholder] = useState<{ base64: string } | null>(
-    null
-  );
-
-  const { ref, inView } = useInView({
-    triggerOnce: true,
-    threshold: 0.3,
-  });
-
-  //   useEffect(() => {
-  //     const fetchPlaiceholder = async () => {
-  //       if (poster) {
-  //         try {
-  //           cons  t response = await fetch(
-  //             `/api/getPlaceholder?poster=${
-  //               "https://image.tmdb.org/t/p/w400" + poster
-  //             }`
-  //           );
-  //           const plaiceholderData = await response.json();
-  //           setPlaiceholder(plaiceholderData);
-  //         } catch (error) {
-  //           console.error("Failed to fetch placeholder:", error);
-  //         }
-  //       }
-  //     };
-
-  //     fetchPlaiceholder();
-  //   }, [poster]);
-
   return (
     <div
-      className="relative w-full min-h-[50vh] py-14 xl:py-32 shadow-inner transition-all duration-300 animate-fadeIn"
+      className="relative w-full min-h-[30vh] py-14 xl:py-32 shadow-inner transition-all duration-300 animate-fadeIn"
       style={{
         backgroundImage: `url(https://image.tmdb.org/t/p/original${movie.backdrop_path})`,
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: window?.innerWidth > 500 ? "fixed" : "scroll",
-        minHeight: "400px",
         width: "100vw",
       }}
     >
@@ -62,7 +32,10 @@ export const MovieHero = ({ movie, genres, setState }) => {
             {movie.title || movie.name || movie.original_title}
           </h1>
           <div className="flex items-center gap-3 mt-3 uppercase text-sm z-10">
-            <p suppressHydrationWarning>
+            <p
+              className="text-[#adff4f] font-bold uppercase tracking-wider"
+              suppressHydrationWarning
+            >
               {moment(movie.release_date).format("YYYY")}
             </p>
             <p>•</p>
@@ -82,12 +55,13 @@ export const MovieHero = ({ movie, genres, setState }) => {
           </p>
           <Link
             href={`/movie/${movie.id}`}
+            prefetch={false}
             className="mt-8 px-4 py-2 uppercase text-xs tracking-wide rounded-sm bg-[#5937ef] hover:bg-[#6b4aff] text-white font-semibold w-fit cursor-pointer z-10 transition"
           >
             Full info
           </Link>
         </div>
-        <div className="text-white w-full lg:w-1/2 flex items-center justify-left lg:justify-center mt-6 lg:mt-0 z-20">
+        <div className="text-white/90 hover:text-white transition w-full lg:w-1/2 flex items-center justify-left lg:justify-center mt-6 lg:mt-0 z-20">
           <button
             className="flex flex-row lg:flex-col gap-2 lg:gap-0 items-center"
             onClick={() =>
@@ -98,7 +72,7 @@ export const MovieHero = ({ movie, genres, setState }) => {
             }
           >
             <PlayIcon />
-            <p className="uppercase font-medium text-sm lg:mt-2 z-10">
+            <p className="uppercase tracking-wider font-semibold text-sm lg:mt-2 z-10">
               Play trailer
             </p>
           </button>

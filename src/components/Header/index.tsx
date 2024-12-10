@@ -95,6 +95,10 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
   useOnClickOutside(wrapperRef, () => setOpenMenu(false));
 
   useEffect(() => {
+    console.log(results);
+  }, [results]);
+
+  useEffect(() => {
     setOpen(false);
   }, []);
 
@@ -126,11 +130,12 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
       if (
         Object.keys(parsedOutput).some((key) => parsedOutput[key].length > 0)
       ) {
+        console.log(parsedOutput);
+        parsedOutput.movies.map((m) => console.log(m.title));
         const promises = [
-          ...parsedOutput.movies.map((m) => movieSearch(m.title!)),
-          ...parsedOutput.people.map((p) => personSearch(p.name!)),
+          ...parsedOutput.movies.map((m) => movieSearch(m)),
+          ...parsedOutput.people.map((p) => personSearch(p)),
         ];
-
         const data = await Promise.all(promises);
         return data.filter((result) => result !== null);
       }
@@ -147,6 +152,8 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
           item.results[0] && movies.push(item.results[0] as Result);
         }
       });
+
+      console.log(data);
 
       setResults({
         movies,

@@ -1,4 +1,4 @@
-import { api } from "../../api";
+import { api, fetchMovieGenres } from "../../api";
 import { useState, useEffect } from "react";
 import { SideMenu } from "../../components/SideMenu";
 import { useRouter } from "next/router";
@@ -8,30 +8,72 @@ import { MovieItem } from "../../components/MovieItem";
 import { useHeaderContext } from "../../contexts/headerContext";
 import { StarIcon, UserIcon, TrophyIconMini } from "../../components/Icons";
 import { CircularProgress } from "@mui/material";
-import useSWR from "swr";
 import OpenAI from "openai";
 import clsx from "clsx";
 import moment from "moment";
 import { fetcher } from "../../api";
+import { GetServerSideProps } from "next";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.params!;
+  const movie = await fetcher(api.movie(id as string));
+  const credits = await fetcher(api.credits(id as string));
+  const reviews = await fetcher(api.reviews(id as string));
+  const keywords = await fetcher(api.keywords(id as string));
+  const similar = await fetcher(api.recommendations(id as string));
+  const genres = await fetchMovieGenres();
 
-export default function Movie() {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const response = await openai.chat.completions.create({
+    messages: [
+      {
+        role: "user",
+        content: `Has this movie won any Academy Awards - ${
+          movie.title || movie.name || movie.original_title
+        }. Only give a 'Yes' or 'No' answer even if you don't know.`,
+      },
+    ],
+    model: "gpt-4-0125-preview",
+  });
+
+  const awards = response.choices[0].message.content?.toLowerCase() ?? "";
+
+  return {
+    props: { movie, credits, reviews, keywords, similar, genres, awards },
+  };
+};
+
+export default function Movie({
+  movie,
+  credits,
+  reviews,
+  keywords,
+  similar,
+  genres,
+  awards,
+}: {
+  movie: any;
+  credits: any;
+  reviews: any;
+  keywords: any;
+  similar: any;
+  genres: any;
+  awards: any;
+}) {
   const router = useRouter();
-  const { id } = router.query;
-
-  const { data: movie } = useSWR(api.movie(id as string), fetcher);
-  const { data: credits } = useSWR(api.credits(id as string), fetcher);
-  const { data: reviews } = useSWR(api.reviews(id as string), fetcher);
-  const { data: keywords } = useSWR(api.keywords(id as string), fetcher);
-  const { data: similar } = useSWR(api.recommendations(id as string), fetcher);
 
   const { open, setOpen } = useHeaderContext();
-  const [awards, setAwards] = useState("");
   const [showFullComment, setShowFullComment] = useState(false);
+  const [isFixed, setIsFixed] = useState(false);
+
+  useEffect(() => {
+    setIsFixed(window?.innerWidth > 500);
+  }, []);
+
+  const backgroundAttachment = isFixed ? "fixed" : "scroll";
 
   const findCreditsByKeyword = (credits: any, keyword: string) => {
     return (
@@ -39,25 +81,25 @@ export default function Movie() {
     );
   };
 
-  useEffect(() => {
-    async function awardSearch(movie: string) {
-      await openai.chat.completions
-        .create({
-          messages: [
-            {
-              role: "user",
-              content: `Has this movie won any Academy Awards - ${movie}. Only give a 'Yes' or 'No' answer even if you don't know.`,
-            },
-          ],
-          model: "gpt-4-0125-preview",
-        })
-        .then((response) => {
-          setAwards(response.choices[0].message.content?.toLowerCase() ?? "");
-        });
-    }
+  // useEffect(() => {
+  //   async function awardSearch(movie: string) {
+  //     await openai.chat.completions
+  //       .create({
+  //         messages: [
+  //           {
+  //             role: "user",
+  //             content: `Has this movie won any Academy Awards - ${movie}. Only give a 'Yes' or 'No' answer even if you don't know.`,
+  //           },
+  //         ],
+  //         model: "gpt-4-0125-preview",
+  //       })
+  //       .then((response) => {
+  //         setAwards(response.choices[0].message.content?.toLowerCase() ?? "");
+  //       });
+  //   }
 
-    movie && awardSearch(movie.title || movie.name || movie.original_title);
-  }, [movie]);
+  //   movie && awardSearch(movie.title || movie.name || movie.original_title);
+  // }, [movie]);
 
   if (typeof window !== "undefined") {
     if (movie && credits && keywords) {
@@ -79,8 +121,7 @@ export default function Movie() {
                 backgroundImage: `url(https://image.tmdb.org/t/p/original${movie?.backdrop_path})`,
                 backgroundSize: "cover",
                 backgroundRepeat: "no-repeat",
-                backgroundAttachment:
-                  window?.innerWidth > 500 ? "fixed" : "scroll",
+                backgroundAttachment,
                 animation: "none",
                 height: "fit-content",
                 width: "100vw",
@@ -359,14 +400,14 @@ export default function Movie() {
                     </h2>
                   </div>
                   <div className="flex overflow-scroll gap-5">
-                    {similar?.results?.map((item, index) => {
+                    {similar?.results?.map((item: any, index: number) => {
                       return (
                         <Link
                           href={`/movie/${item.id}`}
                           className="min-w-[150px]"
+                          key={index}
                         >
                           <MovieItem
-                            key={index}
                             poster={item.poster_path}
                             name={item.original_title}
                             release={item.release_date}
@@ -404,7 +445,7 @@ export default function Movie() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {keywords?.keywords?.map((item, index) => {
+                    {keywords?.keywords?.map((item: any, index: number) => {
                       return (
                         <button
                           key={index}

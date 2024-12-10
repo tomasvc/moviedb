@@ -23,8 +23,10 @@ type stateProps = {
   loadedPages: number;
 };
 
-const fetcher = (url: string): Promise<any> =>
-  axios.get(url).then((res) => res.data);
+const fetcher = async (url: string) => {
+  const response = await axios.get(url);
+  return response.data;
+};
 
 export default function Home() {
   const [state, setState] = useState<stateProps>({
@@ -54,10 +56,6 @@ export default function Home() {
   });
 
   useEffect(() => {
-    console.log(state.selectedMovieIndex);
-  }, [state]);
-
-  useEffect(() => {
     async function fetchData() {
       const movieGenres = await fetchMovieGenres();
       setState((prevState) => ({ ...prevState, genres: movieGenres.genres }));
@@ -73,13 +71,14 @@ export default function Home() {
     player.on("dispose", () => {});
   };
 
-  const { data, isLoading, error, size, setSize } = useSWRInfinite(
-    (index) =>
-      `https://api.themoviedb.org/3/movie/popular?api_key=${
-        process.env.TMDB_API_KEY
-      }&language=en-US&page=${index + 1}`,
+  const { data, isValidating, error, size, setSize } = useSWRInfinite(
+    (index) => `/api/movies?page=${index + 1}`,
     fetcher
   );
+
+  useEffect(() => {
+    console.log(isValidating);
+  }, [isValidating]);
 
   const movies = data
     ? data.flatMap((page) =>
@@ -178,7 +177,6 @@ export default function Home() {
                 key={movie.id}
                 className="w-1/2 lg:w-auto cursor-pointer flex"
                 onClick={() => {
-                  console.log("clicking");
                   setState((prevState) => ({
                     ...prevState,
                     selectedMovieIndex: rowIndex * prevState.rowLength + index,
@@ -187,14 +185,19 @@ export default function Home() {
               >
                 <div
                   className={`p-4 h-full cursor-pointer ${
-                    movies[state.selectedMovieIndex!]?.id === movie.id &&
-                    "bg-gray-900 border-b-4 border-slate-200 rounded-tl rounded-tr transition ease-in"
+                    movies[state.selectedMovieIndex!]?.id === movie.id
+                      ? "bg-gray-900 border-b-4 border-slate-200 rounded-tl rounded-tr transition ease-in"
+                      : "hover:bg-slate-800 rounded transition ease-out duration-300"
                   }`}
                 >
                   <MovieItem
+                    id={movie.id}
                     poster={movie.poster_path}
                     name={movie.title || movie.name || movie.original_title}
                     release={movie.release_date}
+                    genres={state.genres}
+                    genreIds={movie.genre_ids}
+                    placeholder={movie.placeholder}
                   />
                 </div>
               </div>
@@ -254,10 +257,10 @@ export default function Home() {
               <div className="flex justify-center mx-auto pt-10">
                 <button
                   onClick={() => setSize(size + 1)}
-                  disabled={isLoading}
-                  className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-gray-400 text-white text-xs font-medium px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
+                  disabled={isValidating}
+                  className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-[#6a49ff]/40 disabled:text-white/80 text-white text-xs font-medium px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
                 >
-                  {isLoading ? "Loading" : "Show more"}
+                  {isValidating ? "Loading..." : "Show more"}
                 </button>
               </div>
             </div>

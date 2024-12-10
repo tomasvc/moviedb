@@ -1,65 +1,34 @@
 import moment from "moment";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { useInView } from "react-intersection-observer";
-import { getPlaiceholder } from "plaiceholder";
 
-export const MovieItem = ({ poster, name, release }) => {
-  // const [plaiceholder, setPlaiceholder] = useState<{ base64: string } | null>(
-  //   null
-  // );
-
-  const { ref, inView } = useInView({
-    triggerOnce: true,
-    threshold: 0.3,
-  });
-
-  // const src = `https://image.tmdb.org/t/p/w400${poster}`;
-
-  // const buffer = await fetch(src).then(async (res) => {
-  //   return Buffer.from(await res.arrayBuffer());
-  // });
-
-  // const { base64 } = await getPlaiceholder(buffer);
-
-  // useEffect(() => {
-  //   const fetchPlaiceholder = async () => {
-  //     if (poster) {
-  //       try {
-  //         const response = await fetch(
-  //           `/api/getPlaceholder?poster=${
-  //             "https://image.tmdb.org/t/p/w400" + poster
-  //           }`
-  //         );
-  //         const plaiceholderData = await response.json();
-  //         setPlaiceholder(plaiceholderData);
-  //       } catch (error) {
-  //         console.error("Failed to fetch placeholder:", error);
-  //       }
-  //     }
-  //   };
-
-  //   fetchPlaiceholder();
-  // }, [poster]);
-
+export const MovieItem = ({
+  id,
+  poster,
+  name,
+  release,
+  genres,
+  genreIds,
+  placeholder,
+}: {
+  id: number;
+  poster: string;
+  name: string;
+  release: string;
+  genres?: any;
+  genreIds?: number[];
+  placeholder?: string;
+}) => {
   return (
-    <div
-      ref={ref}
-      className="relative flex flex-col rounded-sm cursor-pointer text-white animate-fadeUp"
-    >
+    <div className="relative flex flex-col rounded-sm cursor-pointer text-white animate-fadeUp">
       {poster ? (
         <Image
           src={`https://image.tmdb.org/t/p/w400${poster}`}
           alt={name}
-          className="rounded-md shadow-xl"
-          style={{
-            opacity: inView ? 1 : 0,
-            transition: "opacity 0.2s cubic-bezier(0.3, 0.2, 0.2, 0.8)",
-          }}
+          className="rounded-sm shadow-xl"
           width={180}
           height={270}
           // placeholder="blur"
-          // blurDataURL={base64 || ""}
+          // blurDataURL={placeholder ?? ""}
           priority
         />
       ) : (
@@ -70,12 +39,21 @@ export const MovieItem = ({ poster, name, release }) => {
       )}
 
       <div className="mt-3 mr-1 text-left">
-        <p className="font-medium text-sm leading-5 uppercase tracking-wide max-w-[180px] truncate">
-          {name}
-        </p>
-        <p className="text-xs mt-1 font-light">
-          {moment(release).format("YYYY")}
-        </p>
+        <div className="flex gap-1 overflow-hidden w-[180px] text-slate-400 text-xs mt-1">
+          <span>
+            {moment(release).format("YYYY")}
+            {genres && genreIds && <span className="pl-1">⋅</span>}
+          </span>
+          <span className="truncate">
+            {genres &&
+              genreIds &&
+              genres
+                .filter((genre: any) => genreIds.includes(genre.id))
+                .map((genre: any) => genre?.name)
+                .join("/")}
+          </span>
+        </div>
+        <p className="text-sm leading-6 max-w-[180px] truncate">{name}</p>
       </div>
     </div>
   );

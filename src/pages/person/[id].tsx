@@ -1,4 +1,4 @@
-import Suspense, { lazy, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import {
   fetchPersonDetails,
@@ -14,6 +14,23 @@ import { useHeaderContext } from "../../contexts/headerContext";
 import { Transition } from "@headlessui/react";
 import clsx from "clsx";
 import moment from "moment";
+import { GetServerSideProps } from "next";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.params!;
+  const person = await fetchPersonDetails(id as string);
+  const externals = await fetchPersonExternals(id as string);
+  const credits = await fetchPersonCombinedCredits(id as string);
+  const images = await fetchPersonImages(id as string);
+  return {
+    props: {
+      person,
+      externals,
+      credits,
+      images,
+    },
+  };
+};
 
 export default function PersonPage() {
   const router = useRouter();

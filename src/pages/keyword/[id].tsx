@@ -5,6 +5,19 @@ import { fetchItemsByKeyword, fetchKeyword } from "../../api";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import moment from "moment";
+import { GetServerSideProps } from "next";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.params!;
+  const results = await fetchItemsByKeyword(id as string);
+  const keyword = await fetchKeyword(id as string);
+  return {
+    props: {
+      results,
+      keyword,
+    },
+  };
+};
 
 export default function Keyword() {
   const { open, setOpen } = useHeaderContext();
