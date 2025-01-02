@@ -56,7 +56,7 @@ export default function Keyword() {
     value: number
   ) => {
     setPage(value);
-    window.scrollTo({ top: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   console.log(results);

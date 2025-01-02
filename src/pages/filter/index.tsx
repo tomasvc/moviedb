@@ -15,12 +15,8 @@ export default function Filter() {
   const [isClient, setIsClient] = useState(false);
   const [results, setResults] = useState<any>();
   const [genres, setGenres] = useState<any>([]);
-  const [rating, setRating] = useState<any>([]);
-  const [releaseYearFilterType, setReleaseYearFilterType] = useState("range");
   const [releaseYear, setReleaseYear] = useState<any>([]);
   const [country, setCountry] = useState<any>(null);
-  const [voteAverage, setVoteAverage] = useState<number | null>(null);
-  const [voteCount, setVoteCount] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 
   const countryCodes = {
@@ -80,10 +76,7 @@ export default function Filter() {
               country={country}
               setGenres={setGenres}
               setCountry={setCountry}
-              setReleaseYearFilterType={setReleaseYearFilterType}
               setReleaseYear={setReleaseYear}
-              setVoteAverage={setVoteAverage}
-              setVoteCount={setVoteCount}
             />
           </div>
           <div className="w-[80%] ml-auto mt-16 p-8">

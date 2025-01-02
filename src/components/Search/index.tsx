@@ -120,7 +120,7 @@ export const Search = ({
         } else {
           item.results[0] && movies.push(item.results[0] as Result);
         }
-      });
+      })
 
       setResults({
         movies,

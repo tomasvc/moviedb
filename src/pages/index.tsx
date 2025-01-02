@@ -6,7 +6,7 @@ import { Header } from "@components/Header";
 import { useHeaderContext } from "@contexts/headerContext";
 import { SideMenu } from "@components/SideMenu";
 import { Video } from "@components/Video";
-import { HomeHero } from "./components/HomeHero";
+import { HomeHero } from "@components/HomeHero";
 import useSWRInfinite from "swr/infinite";
 import axios from "axios";
 import Head from "next/head";

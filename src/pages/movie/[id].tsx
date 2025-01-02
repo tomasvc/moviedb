@@ -19,7 +19,7 @@ import clsx from "clsx";
 import moment from "moment";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
-import { Review } from "./components/Review";
+import { Review } from "../../components/Review";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params!;
