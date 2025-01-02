@@ -71,7 +71,7 @@ export default function Filter() {
           <title>Movies</title>
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <Header open={open} setOpen={setOpen} transparent={false} />
+        <Header open={open} setOpen={setOpen} />
         <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
           <SideMenu selected="filter" />
           <div className="overflow-y-auto">

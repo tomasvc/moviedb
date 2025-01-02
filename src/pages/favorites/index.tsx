@@ -1,10 +1,4 @@
-import { useEffect, useState } from "react";
-import {
-  fetchMovies,
-  multiSearch,
-  fetchCollection,
-  fetchMovieGenres,
-} from "../../api";
+import { useState } from "react";
 import { MovieItem } from "../../components/MovieItem";
 import { Header } from "../../components/Header";
 import { useHeaderContext } from "../../contexts/headerContext";

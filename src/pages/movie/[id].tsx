@@ -1,14 +1,9 @@
 import {
-  api,
-  fetchMovieGenres,
-  fetcher,
   fetchMovieDetails,
   fetchMovieCredits,
   fetchMovieReviews,
   fetchMovieKeywords,
   fetchRecommendedMovies,
-  fetchMovieImages,
-  fetchMovieVideos,
 } from "../../api";
 import { useState, useEffect } from "react";
 import { SideMenu } from "../../components/SideMenu";
@@ -100,7 +95,7 @@ export default function Movie({
             <meta name="description" content={movie?.overview.slice(0, 150)} />
             <link rel="icon" href="/favicon.ico" />
           </Head>
-          <Header open={open} setOpen={setOpen} transparent />
+          <Header open={open} setOpen={setOpen} />
           <SideMenu />
           <main
             className={clsx(
@@ -392,7 +387,7 @@ export default function Movie({
     } else {
       return (
         <div className="bg-[#192231]-50 overflow-x-hidden">
-          <Header open={open} setOpen={setOpen} transparent />
+          <Header open={open} setOpen={setOpen} />
           <SideMenu />
           <main
             className={clsx(

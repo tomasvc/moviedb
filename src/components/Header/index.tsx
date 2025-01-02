@@ -6,10 +6,9 @@ import { createPortal } from "react-dom";
 type HeaderProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  transparent: boolean;
 };
 
-export const Header = ({ open, setOpen, transparent }: HeaderProps) => {
+export const Header = ({ open, setOpen }: HeaderProps) => {
   const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export const Header = ({ open, setOpen, transparent }: HeaderProps) => {
         className={`${
           open ? "backdrop-blur-md" : "backdrop-blur-sm"
         } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${
-          transparent ||
           (window?.innerWidth > 500 && !open) ||
           (window?.innerWidth < 500 && !open)
             ? "to-transparent"

@@ -21,19 +21,8 @@ export const FilterMenu: React.FC<{
   country: string;
   setGenres: (genres: any) => any;
   setCountry: (country: string) => any;
-  setReleaseYearFilterType: (type: string) => any;
   setReleaseYear: (releaseYear: number | ReleaseYearRange) => any;
-  setVoteAverage: (voteAverage: number) => any;
-  setVoteCount: (voteCount: number) => any;
-}> = ({
-  genres,
-  country,
-  setGenres,
-  setCountry,
-  setReleaseYear,
-  setVoteAverage,
-  setVoteCount,
-}) => {
+}> = ({ genres, country, setGenres, setCountry, setReleaseYear }) => {
   const [selectedYearSlider, setSelectedYearSlider] = useState("Range");
 
   useEffect(() => {

@@ -278,7 +278,7 @@ export default function Home() {
         <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
           <SideMenu selected="home" />
           <div className="w-full relative">
-            <Header open={open} setOpen={setOpen} transparent={true} />
+            <Header open={open} setOpen={setOpen} />
             <div className="mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
               <HomeHero selectedList={state.selectedList} setState={setState} />
               {rows}

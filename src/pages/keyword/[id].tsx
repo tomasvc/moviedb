@@ -67,7 +67,7 @@ export default function Keyword() {
     return (
       <div className="bg-[#192231]-50">
         <SideMenu selected="home" />
-        <Header open={open} setOpen={setOpen} transparent={false} />
+        <Header open={open} setOpen={setOpen} />
         <main className="container w-full lg:w-2/3 bg-[#192231] px-4 py-10 pt-20 flex flex-col gap-4 mx-auto">
           <button
             onClick={() => router.back()}

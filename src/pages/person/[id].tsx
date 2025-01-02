@@ -116,7 +116,7 @@ export default function PersonPage() {
           </title>
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <Header open={open} setOpen={setOpen} transparent={false} />
+        <Header open={open} setOpen={setOpen} />
         <main
           className={clsx(
             "w-full min-h-screen px-4 lg:px-0 lg:mx-auto transition-all",
