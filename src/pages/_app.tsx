@@ -12,7 +12,7 @@ export default function App({
     <SessionProvider session={session}>
       <HeaderProvider>
         <SpeedInsights />
-        <NextNProgress height={2} options={{ easing: "ease", speed: 500 }} />
+        <NextNProgress height={3} options={{ easing: "ease", speed: 500 }} />
         <Component {...pageProps} />
       </HeaderProvider>
     </SessionProvider>

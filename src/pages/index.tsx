@@ -1,21 +1,23 @@
 import { useEffect, useState, useRef } from "react";
-import { fetchMovieGenres, fetchMovieVideos } from "@api";
+import { api, fetchMovieGenres, fetchMovieVideos } from "@api";
 import { MovieItem } from "@components/MovieItem";
 import { MovieHero } from "@components/MovieHero";
 import { Header } from "@components/Header";
 import { useHeaderContext } from "@contexts/headerContext";
 import { SideMenu } from "@components/SideMenu";
 import { Video } from "@components/Video";
+import { HomeHero } from "./components/HomeHero";
 import useSWRInfinite from "swr/infinite";
 import axios from "axios";
 import Head from "next/head";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
+import { XIcon } from "@components/Icons";
 
 type stateProps = {
   movies: any[];
   genres: any[];
-  videos: any[];
+  videos: { id: number | null; results: any[] };
   selectedMovieIndex: number | null;
   rowLength: number;
   showVideo: boolean;
@@ -32,7 +34,7 @@ export default function Home() {
   const [state, setState] = useState<stateProps>({
     movies: [],
     genres: [],
-    videos: [],
+    videos: { id: null, results: [] },
     selectedMovieIndex: null,
     rowLength: 6,
     showVideo: false,
@@ -55,14 +57,46 @@ export default function Home() {
     ],
   });
 
-  useEffect(() => {
-    async function fetchData() {
-      const movieGenres = await fetchMovieGenres();
-      setState((prevState) => ({ ...prevState, genres: movieGenres.genres }));
+  const handleMovieClick = async (index: number) => {
+    setState((prevState) => ({ ...prevState, selectedMovieIndex: index }));
+
+    const movie = movies[index];
+    if (!movie) return;
+
+    const movieId = movie.id;
+    const selectedMovieElement = document.querySelector(`#movie-${movieId}`);
+
+    if (selectedMovieElement) {
+      selectedMovieElement.scrollIntoView({ behavior: "smooth" });
     }
 
-    fetchData();
-  }, []);
+    try {
+      const videos = await fetchMovieVideos(movieId);
+      if (videos) {
+        setState((prevState) => ({
+          ...prevState,
+          videos: { id: movieId, results: videos.results },
+        }));
+
+        const filteredVideos = videos.results?.filter(
+          (v) => v.type === "Trailer"
+        );
+        if (filteredVideos.length > 0) {
+          setVideoJsOptions({
+            ...videoJsOptions,
+            sources: [
+              {
+                src: `https://youtube.com/watch?v=${filteredVideos[0].key}`,
+                type: "video/youtube",
+              },
+            ],
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch videos for movie", movieId, error);
+    }
+  };
 
   const handlePlayerReady = (player) => {
     playerRef.current = player;
@@ -71,14 +105,20 @@ export default function Home() {
     player.on("dispose", () => {});
   };
 
+  const BASE_URL = "https://api.themoviedb.org/3";
+  const API_KEY = "04c35731a5ee918f014970082a0088b1";
+
   const { data, isValidating, error, size, setSize } = useSWRInfinite(
-    (index) => `/api/movies?page=${index + 1}`,
+    (index) =>
+      `${BASE_URL}${
+        state.selectedList === "Popular"
+          ? api.popularMovies
+          : state.selectedList === "Trending"
+          ? api.trendingMovies
+          : api.upcomingMovies
+      }&page=${index + 1}&api_key=${API_KEY}`,
     fetcher
   );
-
-  useEffect(() => {
-    console.log(isValidating);
-  }, [isValidating]);
 
   const movies = data
     ? data.flatMap((page) =>
@@ -93,6 +133,18 @@ export default function Home() {
     : [];
 
   const moviesRef = useRef(movies);
+
+  useEffect(() => {
+    async function fetchData() {
+      const movieGenres = await fetchMovieGenres();
+      setState((prevState) => ({
+        ...prevState,
+        genres: movieGenres.genres,
+      }));
+    }
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const setRowBasedOnWidth = () => {
@@ -124,30 +176,30 @@ export default function Home() {
   }, [size]);
 
   useEffect(() => {
-    async function fetchVideos() {
-      const getVideos =
-        state.selectedMovieIndex &&
-        (await fetchMovieVideos(movies[state.selectedMovieIndex]?.id));
-      setState((prevState) => ({ ...prevState, videos: getVideos?.results }));
-    }
+    if (state.selectedMovieIndex !== undefined) {
+      const movieId = movies[state.selectedMovieIndex!]?.id;
+      const selectedMovieElement = document.querySelector(`#movie-${movieId}`);
+      const selectedHeroElement = document.querySelector(`#hero-${movieId}`);
 
-    fetchVideos();
+      if (selectedMovieElement && selectedHeroElement) {
+        if (document.body.clientWidth > 1500) {
+          if (selectedMovieElement instanceof HTMLElement) {
+            window.scrollTo({
+              top: selectedMovieElement.offsetTop - 80,
+              behavior: "smooth",
+            });
+          }
+        } else {
+          if (selectedHeroElement instanceof HTMLElement) {
+            window.scrollTo({
+              top: selectedHeroElement.offsetTop - 65,
+              behavior: "smooth",
+            });
+          }
+        }
+      }
+    }
   }, [state.selectedMovieIndex]);
-
-  useEffect(() => {
-    if (state.videos) {
-      const filteredVideos = state.videos?.filter((v) => v.type === "Trailer");
-      setVideoJsOptions({
-        ...videoJsOptions,
-        sources: [
-          {
-            src: `https://youtube.com/watch?v=${filteredVideos[0]?.key}`,
-            type: "video/youtube",
-          },
-        ],
-      });
-    }
-  }, [state.videos]);
 
   useEffect(() => {
     loadedPagesRef.current = state.loadedPages;
@@ -169,7 +221,7 @@ export default function Home() {
     { length: Math.ceil(movies.length / state.rowLength) },
     (_, rowIndex) => (
       <div key={`${rowIndex}-${state.rowLength}`}>
-        <div className="flex justify-start w-fit mx-auto">
+        <div className="flex justify-start w-full min-[430px]:w-fit mx-auto">
           {movies
             .slice(rowIndex * state.rowLength, (rowIndex + 1) * state.rowLength)
             .map((movie, index) => (
@@ -181,24 +233,17 @@ export default function Home() {
                     ...prevState,
                     selectedMovieIndex: rowIndex * prevState.rowLength + index,
                   }));
+                  handleMovieClick(rowIndex * state.rowLength + index);
                 }}
               >
                 <div
-                  className={`p-4 h-full cursor-pointer ${
+                  className={`p-4 w-full h-full cursor-pointer ${
                     movies[state.selectedMovieIndex!]?.id === movie.id
                       ? "bg-gray-900 border-b-4 border-slate-200 rounded-tl rounded-tr transition ease-in"
                       : "hover:bg-slate-800 rounded transition ease-out duration-300"
                   }`}
                 >
-                  <MovieItem
-                    id={movie.id}
-                    poster={movie.poster_path}
-                    name={movie.title || movie.name || movie.original_title}
-                    release={movie.release_date}
-                    genres={state.genres}
-                    genreIds={movie.genre_ids}
-                    placeholder={movie.placeholder}
-                  />
+                  <MovieItem movie={movie} genres={state.genres} />
                 </div>
               </div>
             ))}
@@ -208,9 +253,12 @@ export default function Home() {
           Math.floor(state.selectedMovieIndex / state.rowLength) ===
             rowIndex && (
             <MovieHero
-              movie={movies[state.selectedMovieIndex]}
+              movie={movies[state.selectedMovieIndex!]}
               genres={state.genres}
               setState={setState}
+              videoAvailable={
+                state.videos.id === movies[state.selectedMovieIndex!].id
+              }
             />
           )}
       </div>
@@ -230,29 +278,9 @@ export default function Home() {
         <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
           <SideMenu selected="home" />
           <div className="w-full relative">
-            <Header open={open} setOpen={setOpen} />
+            <Header open={open} setOpen={setOpen} transparent={true} />
             <div className="mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
-              <div
-                className="relative w-full mx-auto flex jusify-center items-center gap-1 py-6 mb-6 bg-black/50"
-                style={{
-                  backgroundImage: `url(/images/genres-wallpaper.jpg)`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "top",
-                  backgroundRepeat: "no-repeat",
-                  backgroundAttachment:
-                    window?.innerWidth > 500 ? "fixed" : "scroll",
-                  minHeight: "300px",
-                  width: "100vw",
-                }}
-              >
-                <div className="absolute top-0 left-0 w-screen h-full bg-black/50" />
-                <p className="text-white text-5xl font-semibold tracking-wider uppercase mx-auto z-10">
-                  <span className="text-[#5937ef] font-black relative bottom-0.5">
-                    /
-                  </span>{" "}
-                  Trending
-                </p>
-              </div>
+              <HomeHero selectedList={state.selectedList} setState={setState} />
               {rows}
               <div className="flex justify-center mx-auto pt-10">
                 <button
@@ -273,22 +301,12 @@ export default function Home() {
                       showVideo: false,
                     }))
                   }
-                  className="absolute top-5 right-5 z-10 text-white"
+                  className="absolute top-5 right-5 z-10 text-white hover:bg-slate-500/20 active:bg-slate-500/30 transition active:transition-none ease-out duration-300 rounded-full p-2"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
+                  <XIcon
+                    className="w-8 sm:w-12 h-auto text-gray-200"
                     strokeWidth={0.5}
-                    stroke="currentColor"
-                    className="w-12 h-12 text-gray-100"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18 18 6M6 6l12 12"
-                    />
-                  </svg>
+                  />
                 </button>
                 <Video options={videoJsOptions} onReady={handlePlayerReady} />
               </div>

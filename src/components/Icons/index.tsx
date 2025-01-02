@@ -15,13 +15,13 @@ export const TrophyIconMini = () => {
   );
 };
 
-export const StarIcon = () => {
+export const StarIcon = ({ className }: { className: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="currentColor"
-      className="w-4 h-4"
+      className={className}
     >
       <path
         fillRule="evenodd"
@@ -127,15 +127,55 @@ export const CheckIcon = () => {
   );
 };
 
-export const XIcon = () => {
+export const BackIcon = ({ className }: { className: string }) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={className}
+    >
+      <path
+        fillRule="evenodd"
+        d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+};
+
+export const WarningIcon = ({ className }: { className: string }) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={className}
+    >
+      <path
+        fillRule="evenodd"
+        d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+};
+
+export const XIcon = ({
+  className,
+  strokeWidth,
+}: {
+  className: string;
+  strokeWidth: number;
+}) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      strokeWidth={3}
+      strokeWidth={strokeWidth}
       stroke="currentColor"
-      className="w-4 h-4"
+      className={className}
     >
       <path
         strokeLinecap="round"
@@ -209,13 +249,13 @@ export const SettingsIcon = () => {
   );
 };
 
-export const UserIcon = () => {
+export const UserIcon = ({ className }: { className: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="currentColor"
-      className="w-10 h-10"
+      className={className}
     >
       <path
         fillRule="evenodd"

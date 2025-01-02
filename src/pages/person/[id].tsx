@@ -15,6 +15,7 @@ import { Transition } from "@headlessui/react";
 import clsx from "clsx";
 import moment from "moment";
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params!;
@@ -68,26 +69,37 @@ export default function PersonPage() {
       setExternals(externals);
       setImages(images.profiles);
 
-      const sortedCast = credits?.cast.sort((a: any, b: any) => {
-        if (a.release_date === undefined && a.first_air_date === undefined)
-          return 1;
-        if (b.release_date === undefined && b.first_air_date === undefined)
-          return -1;
+      const combinedCredits = [
+        ...(credits?.cast || []),
+        ...(credits?.crew || []),
+      ];
 
-        const dateA = new Date(a.release_date || a.first_air_date) as any;
-        const dateB = new Date(b.release_date || b.first_air_date) as any;
+      const birthDate = new Date(person?.birthday).getTime();
+      const filteredCombinedCredits = combinedCredits.filter(
+        (item: any, index: number, self: any[]) => {
+          const itemDate = new Date(
+            item.release_date || item.first_air_date || 0
+          ).getTime();
+          return (
+            itemDate >= birthDate &&
+            self.findIndex((i) => i.id === item.id) === index
+          );
+        }
+      );
 
-        return dateB - dateA;
-      });
+      const sortedCombinedCredits = filteredCombinedCredits.sort(
+        (a: any, b: any) => {
+          const dateA = new Date(
+            a.release_date || a.first_air_date || 0
+          ).getTime();
+          const dateB = new Date(
+            b.release_date || b.first_air_date || 0
+          ).getTime();
+          return dateB - dateA;
+        }
+      );
 
-      const sortedCrew = credits?.crew.sort((a, b) => {
-        const dateA = new Date(a.release_date || a.first_air_date) as any;
-        const dateB = new Date(b.release_date || b.first_air_date) as any;
-
-        return dateB - dateA;
-      });
-
-      setCredits([sortedCast, sortedCrew]);
+      setCredits(sortedCombinedCredits);
     }
 
     if (id) {
@@ -98,7 +110,13 @@ export default function PersonPage() {
   if (isClient)
     return (
       <div className="bg-[#192231] text-gray-100">
-        <Header open={open} setOpen={setOpen} />
+        <Head>
+          <title>
+            {person?.name} - {person?.known_for_department}
+          </title>
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
+        <Header open={open} setOpen={setOpen} transparent={false} />
         <main
           className={clsx(
             "w-full min-h-screen px-4 lg:px-0 lg:mx-auto transition-all",
@@ -219,56 +237,53 @@ export default function PersonPage() {
                 </div>
               )}
               <div className="bg-[#212b3d] shadow-lg mt-10 text-sm flex flex-col divide-y divide-slate-600 rounded-sm border border-slate-600">
-                {credits &&
-                  credits[0]?.map((item, index) => {
-                    return (
-                      <div key={index} className="flex gap-1 p-4">
-                        <p className="text-xs lg:text-sm">
-                          {item.release_date || item.first_air_date
-                            ? moment(
-                                item.release_date || item.first_air_date
-                              ).format("YYYY")
-                            : "-"}
-                        </p>
-                        <div
-                          onClick={() => router.push(`/movie/${item.id}`)}
-                          onMouseEnter={() => handleMouseEnter(index)}
-                          onMouseLeave={handleMouseLeave}
-                          className="relative ml-6 font-medium cursor-pointer text-xs lg:text-sm"
-                        >
-                          {item.original_title || item.title || item.name}
-                          {hoveredIndex === index &&
-                            window.innerWidth > 500 && (
-                              <Transition
-                                show={hoveredIndex === index}
-                                enter="transition-opacity duration-200"
-                                enterFrom="opacity-0"
-                                enterTo="opacity-100"
-                                leave="transition-opacity duration-2000"
-                                leaveFrom="opacity-100"
-                                leaveTo="opacity-0"
-                              >
-                                <div className="absolute z-30 cursor-default">
-                                  <ItemPopup
-                                    id={
-                                      item.media_type === "movie"
-                                        ? item.id
-                                        : null
-                                    }
-                                    visible={hoveredIndex === index}
-                                  />
-                                </div>
-                              </Transition>
-                            )}
-                        </div>
+                {credits?.map((item, index) => {
+                  return (
+                    <div key={index} className="flex items-center gap-1 p-4">
+                      <p className="text-xs lg:text-sm">
+                        {item.release_date || item.first_air_date
+                          ? moment(
+                              item.release_date || item.first_air_date
+                            ).format("YYYY")
+                          : "-"}
+                      </p>
+                      <div
+                        onClick={() => router.push(`/movie/${item.id}`)}
+                        onMouseEnter={() => handleMouseEnter(index)}
+                        onMouseLeave={handleMouseLeave}
+                        className="inline relative ml-6 font-medium cursor-pointer text-xs lg:text-sm leading-5"
+                      >
+                        {item.original_title || item.title || item.name}
                         {item.character && (
-                          <p className="font-light text-xs lg:text-sm">
+                          <span className="font-light text-xs lg:text-sm">
+                            {" "}
                             as {item.character}
-                          </p>
+                          </span>
+                        )}
+                        {hoveredIndex === index && window.innerWidth > 500 && (
+                          <Transition
+                            show={hoveredIndex === index}
+                            enter="transition-opacity duration-200"
+                            enterFrom="opacity-0"
+                            enterTo="opacity-100"
+                            leave="transition-opacity duration-2000"
+                            leaveFrom="opacity-100"
+                            leaveTo="opacity-0"
+                          >
+                            <div className="absolute z-30 cursor-default">
+                              <ItemPopup
+                                id={
+                                  item.media_type === "movie" ? item.id : null
+                                }
+                                visible={hoveredIndex === index}
+                              />
+                            </div>
+                          </Transition>
                         )}
                       </div>
-                    );
-                  })}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

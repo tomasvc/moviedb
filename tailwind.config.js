@@ -35,8 +35,12 @@ module.exports = {
           "100%": { transform: "translateY(0px)", opacity: 100 },
         },
         fadeInScaleUp: {
-          "0%": { transform: "scale(0.9)", opacity: 0 },
+          "0%": { transform: "scale(0.95)", opacity: 0 },
           "100%": { transform: "scale(1)", opacity: 100 },
+        },
+        fadeOutScaleDown: {
+          "0%": { transform: "scale(1)", opacity: 100 },
+          "100%": { transform: "scale(0.95)", opacity: 0 },
         },
       },
       animation: {
@@ -44,7 +48,8 @@ module.exports = {
         fadeUp: "fadeUp 0.25s ease-in-out",
         fadeIn: "fadeIn 0.25s ease-in-out",
         fadeInDown: "fadeInDown 0.2s ease",
-        fadeInScaleUp: "fadeInScaleUp 0.3s ease-in-out",
+        fadeInScaleUp: "fadeInScaleUp 0.3s cubic-bezier(0.4, 0, 0.8, 1)",
+        fadeOutScaleDown: "fadeOutScaleDown 0.3s cubic-bezier(0.4, 0, 0.8, 1)",
         expand: "expand 0.25s ease-in-out",
       },
     },

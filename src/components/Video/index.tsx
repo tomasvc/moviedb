@@ -41,8 +41,6 @@ export const Video = (props: any) => {
 
   // Dispose the Video.js player when the functional component unmounts
   useEffect(() => {
-    const player = playerRef.current;
-
     return () => {
       const player = playerRef.current as any;
       if (player && !player.isDisposed()) {
@@ -53,8 +51,14 @@ export const Video = (props: any) => {
   }, [playerRef]);
 
   return (
-    <div data-vjs-player>
-      <div className="w-screen xl:w-[50vw] h-[50vh]" ref={videoRef} />
+    <div
+      data-vjs-player
+      className="w-full h-full flex justify-center items-center"
+    >
+      <div
+        className="w-[100vw] h-[60vh] xl:w-[50vw] xl:h-[50vh] flex justify-center items-center"
+        ref={videoRef}
+      />
     </div>
   );
 };

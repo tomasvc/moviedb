@@ -43,13 +43,15 @@ export const ItemPopup = ({ id, media_type, visible }: ItemPopupTypes) => {
         )}
         <div className="p-4">
           <p
-            className="text-xl mb-2 cursor-pointer w-fit"
+            className="text-xl mb-2 cursor-pointer w-fit line-clamp-2"
             onClick={() => router.push(`/movie/${id}`)}
           >
             {details?.name || details?.original_title || details?.title}
           </p>
           {details?.overview && (
-            <p className="font-light">{details?.overview}</p>
+            <p className="font-light text-xs lg:text-sm leading-5">
+              {details?.overview}
+            </p>
           )}
         </div>
       </div>

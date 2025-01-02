@@ -1,4 +1,15 @@
-import { api, fetchMovieGenres } from "../../api";
+import {
+  api,
+  fetchMovieGenres,
+  fetcher,
+  fetchMovieDetails,
+  fetchMovieCredits,
+  fetchMovieReviews,
+  fetchMovieKeywords,
+  fetchRecommendedMovies,
+  fetchMovieImages,
+  fetchMovieVideos,
+} from "../../api";
 import { useState, useEffect } from "react";
 import { SideMenu } from "../../components/SideMenu";
 import { useRouter } from "next/router";
@@ -6,22 +17,22 @@ import Link from "next/link";
 import { Header } from "../../components/Header";
 import { MovieItem } from "../../components/MovieItem";
 import { useHeaderContext } from "../../contexts/headerContext";
-import { StarIcon, UserIcon, TrophyIconMini } from "../../components/Icons";
+import { TrophyIconMini } from "../../components/Icons";
 import { CircularProgress } from "@mui/material";
 import OpenAI from "openai";
 import clsx from "clsx";
 import moment from "moment";
-import { fetcher } from "../../api";
 import { GetServerSideProps } from "next";
+import Head from "next/head";
+import { Review } from "./components/Review";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params!;
-  const movie = await fetcher(api.movie(id as string));
-  const credits = await fetcher(api.credits(id as string));
-  const reviews = await fetcher(api.reviews(id as string));
-  const keywords = await fetcher(api.keywords(id as string));
-  const similar = await fetcher(api.recommendations(id as string));
-  const genres = await fetchMovieGenres();
+  const movie = await fetchMovieDetails(id as string);
+  const credits = await fetchMovieCredits(id as string);
+  const reviews = await fetchMovieReviews(id as string);
+  const keywords = await fetchMovieKeywords(id as string);
+  const recommendations = await fetchRecommendedMovies(id as string);
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -42,7 +53,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const awards = response.choices[0].message.content?.toLowerCase() ?? "";
 
   return {
-    props: { movie, credits, reviews, keywords, similar, genres, awards },
+    props: { movie, credits, reviews, keywords, recommendations, awards },
   };
 };
 
@@ -51,22 +62,19 @@ export default function Movie({
   credits,
   reviews,
   keywords,
-  similar,
-  genres,
+  recommendations,
   awards,
 }: {
   movie: any;
   credits: any;
   reviews: any;
   keywords: any;
-  similar: any;
-  genres: any;
+  recommendations: any;
   awards: any;
 }) {
   const router = useRouter();
 
   const { open, setOpen } = useHeaderContext();
-  const [showFullComment, setShowFullComment] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
 
   useEffect(() => {
@@ -81,30 +89,17 @@ export default function Movie({
     );
   };
 
-  // useEffect(() => {
-  //   async function awardSearch(movie: string) {
-  //     await openai.chat.completions
-  //       .create({
-  //         messages: [
-  //           {
-  //             role: "user",
-  //             content: `Has this movie won any Academy Awards - ${movie}. Only give a 'Yes' or 'No' answer even if you don't know.`,
-  //           },
-  //         ],
-  //         model: "gpt-4-0125-preview",
-  //       })
-  //       .then((response) => {
-  //         setAwards(response.choices[0].message.content?.toLowerCase() ?? "");
-  //       });
-  //   }
-
-  //   movie && awardSearch(movie.title || movie.name || movie.original_title);
-  // }, [movie]);
-
   if (typeof window !== "undefined") {
     if (movie && credits && keywords) {
       return (
         <div className="bg-[#192231]-50 overflow-x-hidden animate-fadeIn">
+          <Head>
+            <title>
+              {movie?.title || movie?.name || movie?.original_title}
+            </title>
+            <meta name="description" content={movie?.overview.slice(0, 150)} />
+            <link rel="icon" href="/favicon.ico" />
+          </Head>
           <Header open={open} setOpen={setOpen} transparent />
           <SideMenu />
           <main
@@ -309,7 +304,7 @@ export default function Movie({
                 </div>
                 {reviews?.results?.length > 0 && (
                   <div className="w-full mx-auto py-8">
-                    <div className="flex gap-3 items-center">
+                    <div className="flex gap-3 items-center mb-4">
                       <div className="w-1.5 h-7 bg-blue-400" />
                       <h2 className="text-lg font-medium uppercase mr-4 tracking-wide">
                         Social
@@ -317,79 +312,12 @@ export default function Movie({
                       <button className="font-semibold mt-1.5 pb-1 border-b-4 border-slate-600">
                         Reviews {reviews?.results?.length}
                       </button>
-                      <button className="font-semibold mb-1 ml-2">
-                        Discussions
-                      </button>
                     </div>
-                    <div className="bg-[#263146] shadow-md border border-slate-600 p-8 mt-8 rounded-lg">
-                      <div className="flex w-full">
-                        {reviews?.results[0]?.author_details?.avatar_path
-                          ?.length ? (
-                          <img
-                            className="rounded-full w-16 h-16"
-                            src={
-                              reviews?.results[0]?.author_details?.avatar_path?.includes(
-                                "https"
-                              )
-                                ? reviews?.results[0]?.author_details?.avatar_path?.slice(
-                                    1
-                                  )
-                                : `https://image.tmdb.org/t/p/w400${reviews?.results[0]?.author_details?.avatar_path}`
-                            }
-                          />
-                        ) : (
-                          <div className="w-10 h-10">
-                            <UserIcon />
-                          </div>
-                        )}
-
-                        <div className="pl-4 mb-auto flex flex-col w-full">
-                          <div className="flex items-center">
-                            <p className="text-base xl:text-xl font-bold">
-                              A review by {reviews?.results[0]?.author}
-                            </p>
-                            <div className="flex items-center gap-1 bg-black text-sm font-light h-fit px-2.5 rounded-md ml-2">
-                              <StarIcon />
-                              <p>
-                                {reviews?.results[0]?.author_details?.rating}
-                              </p>
-                            </div>
-                          </div>
-                          <p
-                            className="text-sm font-light text-gray-400"
-                            suppressHydrationWarning
-                          >
-                            Written by {reviews?.results[0]?.author} on{" "}
-                            {moment(reviews?.results[0]?.created_at).format(
-                              "MMMM d, YYYY"
-                            )}
-                          </p>
-                          <div
-                            className={`mt-8 text-xs xl:text-sm leading-5 ${
-                              showFullComment
-                                ? "line-clamp-none"
-                                : "line-clamp-6"
-                            }`}
-                            dangerouslySetInnerHTML={{
-                              __html: reviews?.results[0]?.content.replace(
-                                /(?:\r\n|\r|\n)/g,
-                                "<br>"
-                              ),
-                            }}
-                          />
-                          <button
-                            onClick={() => setShowFullComment(!showFullComment)}
-                            className="w-fit text-xs uppercase font-semibold mt-8"
-                          >
-                            {"Show"}
-                            {showFullComment ? " less" : " more"}
-                          </button>
-                        </div>
-                      </div>
+                    <div className="flex flex-col gap-1">
+                      {reviews?.results.map((review, index) => {
+                        return <Review review={review} index={index} />;
+                      })}
                     </div>
-                    {/* <button className="font-medium text-lg mt-4">
-                      Read All Reviews
-                    </button> */}
                   </div>
                 )}
                 <div className="relative w-full mx-auto py-10">
@@ -399,23 +327,20 @@ export default function Movie({
                       Recommendations
                     </h2>
                   </div>
-                  <div className="flex overflow-scroll gap-5">
-                    {similar?.results?.map((item: any, index: number) => {
-                      return (
-                        <Link
-                          href={`/movie/${item.id}`}
-                          className="min-w-[150px]"
-                          key={index}
-                        >
-                          <MovieItem
-                            id={item.id}
-                            poster={item.poster_path}
-                            name={item.original_title}
-                            release={item.release_date}
-                          />
-                        </Link>
-                      );
-                    })}
+                  <div className="flex overflow-x-scroll gap-5">
+                    {recommendations?.results?.map(
+                      (item: any, index: number) => {
+                        return (
+                          <Link
+                            href={`/movie/${item.id}`}
+                            className="min-w-[150px]"
+                            key={index}
+                          >
+                            <MovieItem movie={item} />
+                          </Link>
+                        );
+                      }
+                    )}
                   </div>
                 </div>
               </div>

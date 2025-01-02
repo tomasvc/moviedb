@@ -1,21 +1,11 @@
-"use client";
 import moment from "moment";
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import { useInView } from "react-intersection-observer";
 import Link from "next/link";
 import { PlayIcon } from "@components/Icons";
-type MovieItemProps = {
-  id: number;
-  poster: string;
-  name: string;
-  release: string;
-  rating: string;
-};
 
-export const MovieHero = ({ movie, genres, setState }) => {
+export const MovieHero = ({ movie, genres, setState, videoAvailable }) => {
   return (
     <div
+      id={`hero-${movie.id}`}
       className="relative w-full min-h-[30vh] py-14 xl:py-32 shadow-inner transition-all duration-300 animate-fadeIn"
       style={{
         backgroundImage: `url(https://image.tmdb.org/t/p/original${movie.backdrop_path})`,
@@ -28,10 +18,10 @@ export const MovieHero = ({ movie, genres, setState }) => {
       <div className="absolute w-full h-full bg-black opacity-60 top-0 left-0 shadow-inner" />
       <div className="px-4 lg:px-0 max-w-2xl xl:max-w-6xl h-full mx-auto flex flex-col lg:flex-row items-center">
         <div className="flex flex-col text-white">
-          <h1 className="text-3xl xl:text-5xl uppercase tracking-wider font-semibold w-full lg:w-1/2 z-10">
+          <h1 className="text-xl sm:text-3xl xl:text-5xl uppercase tracking-wider font-semibold w-full lg:w-3/4 z-10">
             {movie.title || movie.name || movie.original_title}
           </h1>
-          <div className="flex items-center gap-3 mt-3 uppercase text-sm z-10">
+          <div className="flex items-center gap-2 mt-3 uppercase text-xs sm:text-sm z-10">
             <p
               className="text-[#adff4f] font-bold uppercase tracking-wider"
               suppressHydrationWarning
@@ -50,7 +40,7 @@ export const MovieHero = ({ movie, genres, setState }) => {
                 .join(", ")}
             </p>
           </div>
-          <p className="mt-6 w-full lg:w-1/2 leading-6 md:leading-7 text-xs md:text-[0.9rem] z-10">
+          <p className="mt-6 w-full lg:w-2/3 xl:w-1/2 leading-6 md:leading-7 text-xs md:text-[0.9rem] z-10">
             {movie.overview}
           </p>
           <Link
@@ -61,22 +51,24 @@ export const MovieHero = ({ movie, genres, setState }) => {
             Full info
           </Link>
         </div>
-        <div className="text-white/90 hover:text-white transition w-full lg:w-1/2 flex items-center justify-left lg:justify-center mt-6 lg:mt-0 z-20">
-          <button
-            className="flex flex-row lg:flex-col gap-2 lg:gap-0 items-center"
-            onClick={() =>
-              setState((prevState) => ({
-                ...prevState,
-                showVideo: true,
-              }))
-            }
-          >
-            <PlayIcon />
-            <p className="uppercase tracking-wider font-semibold text-sm lg:mt-2 z-10">
-              Play trailer
-            </p>
-          </button>
-        </div>
+        {videoAvailable && (
+          <div className="text-white/90 hover:text-white transition w-full lg:w-1/2 flex items-center justify-left lg:justify-center mt-6 lg:mt-0 z-20">
+            <button
+              className="flex flex-row lg:flex-col gap-2 lg:gap-0 items-center"
+              onClick={() =>
+                setState((prevState) => ({
+                  ...prevState,
+                  showVideo: true,
+                }))
+              }
+            >
+              <PlayIcon />
+              <p className="uppercase tracking-wider font-semibold text-sm whitespace-nowrap lg:mt-2 z-10">
+                Play trailer
+              </p>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

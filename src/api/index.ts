@@ -1,5 +1,9 @@
 const API_KEY = process.env.TMDB_API_KEY;
-import axios from "axios";
+const BASE_URL = "https://api.themoviedb.org/3";
+
+import axios, { AxiosResponse } from "axios";
+import { useCallback, useEffect } from "react";
+import { useState } from "react";
 
 export const fetcher = async (url: string) => {
   try {
@@ -21,255 +25,192 @@ export const fetcher = async (url: string) => {
   }
 };
 
-export const api = {
-  popularMovies: `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}`,
-  trendingMovies: `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`,
-  multiSearch: `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`,
-  movieGenres: `https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`,
-  movie: (id: string) =>
-    `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&language=en-US`,
-  credits: (id: string) =>
-    `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${API_KEY}&language=en-US`,
-  reviews: (id: string) =>
-    `https://api.themoviedb.org/3/movie/${id}/reviews?api_key=${API_KEY}&language=en-US`,
-  keywords: (id: string) =>
-    `https://api.themoviedb.org/3/movie/${id}/keywords?api_key=${API_KEY}&language=en-US`,
-  recommendations: (id: string) =>
-    `https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${API_KEY}&language=en-US`,
+const apiClient = axios.create({
+  baseURL: BASE_URL,
+  params: {
+    api_key: API_KEY,
+    language: "en-US",
+  },
+});
+
+apiClient.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error) => {
+    if (error.response) {
+      console.error("Error response:", error.response);
+      return Promise.reject(
+        new Error(
+          "Data fetching failed with status " +
+            error.response.data.status_message
+        )
+      );
+    } else if (error.request) {
+      console.error("Error request:", error.request);
+      return Promise.reject(
+        new Error("No response received for the data request.")
+      );
+    } else {
+      console.error("Error message:", error.message);
+      return Promise.reject(new Error("Error in setting up the data request."));
+    }
+  }
+);
+
+const fetchData = async <T>(
+  endpoint: string,
+  params?: Record<string, any>
+): Promise<T> => {
+  const response = await apiClient.get<T>(endpoint, { params });
+  return response.data;
 };
 
-export async function fetchMovies(page: number) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=en-US&page=${page}`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch movies");
-  }
-  return response.json();
-}
+export const api = {
+  popularMovies:
+    "/discover/movie?include_adult=false&include_video=false&language=en-US&sort_by=popularity.desc",
+  trendingMovies:
+    "/trending/movie/week?include_adult=false&include_video=false&language=en-US",
+  upcomingMovies: `/discover/movie?include_adult=false&include_video=false&language=en-US&sort_by=popularity.desc&with_release_type=2|3&release_date.gte=${
+    new Date(new Date().setMonth(new Date().getMonth() + 1))
+      .toISOString()
+      .split("T")[0]
+  }&release_date.lte=${
+    new Date(new Date().setMonth(new Date().getMonth() + 5))
+      .toISOString()
+      .split("T")[0]
+  }`,
+  multiSearch: "/trending/movie/week",
+  movieGenres: "/genre/movie/list",
+  movieList: (id: string) => `/list/${id}`,
+  movie: (id: string) => `/movie/${id}`,
+  credits: (id: string) => `/movie/${id}/credits`,
+  reviews: (id: string) => `/movie/${id}/reviews`,
+  keywords: (id: string) => `/movie/${id}/keywords`,
+  person: (id: string) => `/person/${id}`,
+  personExternals: (id: string) => `/person/${id}/external_ids`,
+  personCombinedCredits: (id: string) => `/person/${id}/combined_credits`,
+  itemsByKeyword: (keywordId: string) =>
+    `/discover/movie?with_keywords=${keywordId}`,
+  keyword: (id: string) => `/keyword/${id}`,
+  similarMovies: (id: string) => `/movie/${id}/similar`,
+  recommendedMovies: (id: string) => `/movie/${id}/recommendations`,
+  movieImages: (id: string) => `/movie/${id}/images`,
+  movieVideos: (id: string) => `/movie/${id}/videos`,
+  personImages: (id: string) => `/person/${id}/images`,
+  collection: (id: string) => `/collection/${id}`,
+};
 
-export async function fetchTrendingMovies() {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch movies");
-  }
-  return response.json();
-}
+export const fetchPopularMovies = async (page: number): Promise<any> => {
+  return fetchData(api.popularMovies, { page });
+};
 
-export async function multiSearch(query: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&language=en-US&query=${query}`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchTrendingMovies = async (): Promise<any> => {
+  return fetchData(`${api.trendingMovies}`);
+};
 
-export async function movieSearch(query: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&language=en-US&query=${query}`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchUpcomingMovies = async (): Promise<any> => {
+  return fetchData(`${api.upcomingMovies}`);
+};
 
-export async function personSearch(query: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&language=en-US&query=${query}`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const multiSearch = async (query: string, page: number = 1) => {
+  return fetchData(api.multiSearch, { query, page });
+};
 
-export async function fetchMovieDetails(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const movieSearch = async (query: string, page: number = 1) => {
+  return fetchData("/search/movie", { query, page });
+};
 
-export async function fetchMovieCredits(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const personSearch = async (query: string, page: number = 1) => {
+  return fetchData("/search/person", { query, page });
+};
 
-export async function fetchMovieReviews(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}/reviews?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchMovieDetails = async (id: string): Promise<any> => {
+  return fetchData(api.movie(id));
+};
 
-export async function fetchPersonDetails(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/person/${id}?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchMovieCredits = async (id: string): Promise<any> => {
+  return fetchData(api.credits(id));
+};
 
-export async function fetchPersonExternals(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/person/${id}/external_ids?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchMovieReviews = async (id: string): Promise<any> => {
+  return fetchData(api.reviews(id));
+};
 
-export async function fetchPersonCombinedCredits(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/person/${id}/combined_credits?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchMovieKeywords = async (id: string): Promise<any> => {
+  return fetchData(api.keywords(id));
+};
 
-export async function fetchMovieKeywords(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}/keywords?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchPersonDetails = async (id: string): Promise<any> => {
+  return fetchData(api.person(id));
+};
 
-export async function fetchItemsByKeyword(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/keyword/${id}/movies?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchPersonExternals = async (id: string): Promise<any> => {
+  return fetchData(api.personExternals(id));
+};
 
-export async function fetchKeyword(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/keyword/${id}?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchPersonCombinedCredits = async (id: string): Promise<any> => {
+  return fetchData(api.personCombinedCredits(id));
+};
 
-export async function fetchSimilarMovies(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}/similar?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchItemsByKeyword = async (
+  keywordId: string,
+  page: number
+): Promise<any> => {
+  return fetchData(api.itemsByKeyword(keywordId), { page });
+};
 
-export async function fetchRecommendedMovies(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchKeyword = async (id: string): Promise<any> => {
+  return fetchData(api.keyword(id));
+};
 
-export async function fetchMovieImages(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}/images?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchSimilarMovies = async (id: string): Promise<any> => {
+  return fetchData(api.similarMovies(id));
+};
 
-export async function fetchMovieVideos(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchRecommendedMovies = async (id: string): Promise<any> => {
+  return fetchData(api.recommendedMovies(id));
+};
 
-export async function fetchPersonImages(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/person/${id}/images?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchMovieImages = async (id: string): Promise<any> => {
+  return fetchData(api.movieImages(id));
+};
 
-export async function fetchCollection(id: string) {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/collection/${id}?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchMovieVideos = async (id: string): Promise<any> => {
+  return fetchData(api.movieVideos(id));
+};
 
-export async function fetchMovieGenres() {
-  const response = await fetch(
-    `https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}&language=en-US`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
-}
+export const fetchPersonImages = async (id: string): Promise<any> => {
+  return fetchData(api.personImages(id));
+};
 
-export const fetchDiscover = async (
-  genres?: any[],
-  country?: string,
-  releaseYear?: any
-) => {
-  const selectedGenres: any[] = [];
-  genres?.forEach((gen) => gen.selected && selectedGenres.push(gen.id));
-  const releaseYearParam: string | undefined =
-    releaseYear?.type === "range"
-      ? `&primary_release_date.gte=${
-          releaseYear?.from + "-01-01"
-        }&primary_release_date.lte=${releaseYear?.to + "-12-31"}`
-      : releaseYear?.type === "exact"
-      ? `&year=${releaseYear?.releaseYear}`
-      : "";
-  const response = await fetch(
-    `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=en-US${
-      selectedGenres.length && `&with_genres=${selectedGenres.join(",")}`
-    }${country && `&with_origin_country=${country}`}${releaseYearParam}`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch");
-  }
-  return response.json();
+export const fetchCollection = async (id: string): Promise<any> => {
+  return fetchData(api.collection(id));
+};
+
+export const fetchMovieGenres = async (): Promise<any> => {
+  return fetchData(api.movieGenres);
+};
+
+export const useApi = <T>(endpoint: string, params?: Record<string, any>) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [data, setData] = useState<T | null>(null);
+
+  const fetchDataCallback = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchData<T>(endpoint, params);
+      setData(result);
+    } catch (error) {
+      setError(error as Error);
+    } finally {
+      setLoading(false);
+    }
+  }, [endpoint, params]);
+
+  useEffect(() => {
+    fetchDataCallback();
+  }, [fetchDataCallback]);
+
+  return { loading, error, data };
 };

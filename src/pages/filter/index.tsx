@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { fetchDiscover } from "../../api";
+import { fetchDiscover } from "../api/fetchDiscover";
 import { SideMenu } from "../../components/SideMenu";
 import { FilterMenu } from "../../components/FilterMenu";
 import { Header } from "../../components/Header";
 import { useHeaderContext } from "../../contexts/headerContext";
 import { MovieItem } from "../../components/MovieItem";
 import { XIcon } from "../../components/Icons";
+import { Pagination } from "@mui/material";
 
 export default function Filter() {
   const { open, setOpen } = useHeaderContext();
@@ -20,6 +21,7 @@ export default function Filter() {
   const [country, setCountry] = useState<any>(null);
   const [voteAverage, setVoteAverage] = useState<number | null>(null);
   const [voteCount, setVoteCount] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
   const countryCodes = {
     Australia: "AU",
@@ -42,21 +44,24 @@ export default function Filter() {
       const data = await fetchDiscover(
         genres,
         country && countryCodes[country],
-        releaseYear!
+        releaseYear!,
+        page
       );
       setResults(data);
     };
     fetchData();
-  }, [genres, country, releaseYear]);
+  }, [genres, country, releaseYear, page]);
 
   const handleFilterClick = () => {
-    const newArr = genres.map((item) => {
-      if (item.selected) {
-        return { ...item, selected: false };
-      } else return item;
-    });
-
+    const newArr = genres.map((item) => ({ ...item, selected: false }));
     setGenres(newArr);
+  };
+
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setPage(value);
   };
 
   if (isClient)
@@ -66,7 +71,7 @@ export default function Filter() {
           <title>Movies</title>
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <Header open={open} setOpen={setOpen} />
+        <Header open={open} setOpen={setOpen} transparent={false} />
         <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
           <SideMenu selected="filter" />
           <div className="overflow-y-auto">
@@ -89,35 +94,35 @@ export default function Filter() {
                 </p>
               )}
               {genres && genres.some((item) => item.selected) && (
-                <div className="flex justify-between items-center gap-2 animate-fadeUp text-slate-100 bg-slate-400/10 uppercase font-light text-[0.8rem] tracking-wider rounded-full px-5 py-1">
+                <div className="flex justify-between items-center gap-0.5 animate-fadeUp text-slate-100 bg-slate-400/10 uppercase font-light text-[0.8rem] tracking-wider rounded-full pl-4 pr-2 py-1">
                   Genre
                   <button
-                    className="relative bottom-[1px]"
+                    className="relative p-1"
                     onClick={() => handleFilterClick()}
                   >
-                    {<XIcon />}
+                    <XIcon className="text-slate-100 w-4 h-4" strokeWidth={2} />
                   </button>
                 </div>
               )}
               {country && (
-                <div className="flex justify-between items-center gap-2 animate-fadeUp text-slate-100 bg-slate-400/10 uppercase font-light text-[0.8rem] tracking-wider rounded-full px-5 py-1">
+                <div className="flex justify-between items-center gap-0.5 animate-fadeUp text-slate-100 bg-slate-400/10 uppercase font-light text-[0.8rem] tracking-wider rounded-full pl-4 pr-2 py-1">
                   Country
                   <button
-                    className="relative bottom-[1px]"
+                    className="relative p-1"
                     onClick={() => setCountry(null)}
                   >
-                    {<XIcon />}
+                    <XIcon className="text-slate-100 w-4 h-4" strokeWidth={2} />
                   </button>
                 </div>
               )}
               {releaseYear && (
-                <div className="flex justify-between items-center gap-2 animate-fadeUp text-slate-100 bg-slate-400/10 uppercase font-light text-[0.8rem] tracking-wider rounded-full px-5 py-1">
+                <div className="flex justify-between items-center gap-0.5 animate-fadeUp text-slate-100 bg-slate-400/10 uppercase font-light text-[0.8rem] tracking-wider rounded-full pl-4 pr-2 py-1">
                   Year
                   <button
-                    className="relative bottom-[1px]"
+                    className="relative p-1"
                     onClick={() => setReleaseYear(null)}
                   >
-                    {<XIcon />}
+                    <XIcon className="text-slate-100 w-4 h-4" strokeWidth={2} />
                   </button>
                 </div>
               )}
@@ -131,16 +136,32 @@ export default function Filter() {
               {results?.results.map((item, index) => {
                 return (
                   <Link href={`/movie/${item.id}`} key={index}>
-                    <MovieItem
-                      id={item.id}
-                      poster={item.poster_path}
-                      name={item.title || item.original_title || item.name}
-                      release={item.release_date}
-                    />
+                    <MovieItem movie={item} />
                   </Link>
                 );
               })}
             </div>
+            <Pagination
+              color="primary"
+              size="small"
+              sx={{
+                marginTop: "2rem",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+                marginBottom: "2rem",
+                "& .MuiPagination-ul": {
+                  gap: "1rem",
+                },
+                "& .MuiPaginationItem-root": {
+                  color: "white",
+                },
+              }}
+              count={results ? Math.ceil(results.total_results / 20) : 0}
+              page={page}
+              onChange={handlePageChange}
+            />
           </div>
         </main>
       </div>
