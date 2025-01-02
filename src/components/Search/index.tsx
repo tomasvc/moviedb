@@ -114,11 +114,11 @@ export const Search = ({
       let movies: Result[] = [];
       let people: Result[] = [];
 
-      data?.forEach((item) => {
-        if (item?.results[0]?.gender) {
-          people.push(item?.results[0] as Result);
+      data?.forEach((item: { results: Result[] }) => {
+        if (item.results[0]?.gender) {
+          people.push(item.results[0] as Result);
         } else {
-          item?.results[0] && movies.push(item?.results[0] as Result);
+          item.results[0] && movies.push(item.results[0] as Result);
         }
       });
 
