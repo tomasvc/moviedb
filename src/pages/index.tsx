@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { api, fetchMovieGenres, fetchMovieVideos } from "@api";
 import { MovieItem } from "@components/MovieItem";
-import { MovieHero } from "@components/MovieHero";
+import { HomeMovieHero } from "@components/HomeMovieHero";
 import { Header } from "@components/Header";
 import { useHeaderContext } from "@contexts/headerContext";
 import { SideMenu } from "@components/SideMenu";
@@ -38,7 +38,7 @@ export default function Home() {
     selectedMovieIndex: null,
     rowLength: 6,
     showVideo: false,
-    selectedList: "Popular",
+    selectedList: "Trending",
     loadedPages: 0,
   });
   const { open, setOpen } = useHeaderContext();
@@ -252,7 +252,7 @@ export default function Home() {
         {state.selectedMovieIndex !== null &&
           Math.floor(state.selectedMovieIndex / state.rowLength) ===
             rowIndex && (
-            <MovieHero
+            <HomeMovieHero
               movie={movies[state.selectedMovieIndex!]}
               genres={state.genres}
               setState={setState}
@@ -264,9 +264,6 @@ export default function Home() {
       </div>
     )
   );
-
-  if (error) return <div>Failed to load.</div>;
-  if (!data) return <div>Loading...</div>;
 
   if (typeof window !== "undefined") {
     return (
@@ -281,16 +278,20 @@ export default function Home() {
             <Header open={open} setOpen={setOpen} />
             <div className="mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
               <HomeHero selectedList={state.selectedList} setState={setState} />
+              {error && <div>Failed to load.</div>}
+              {!data && <div>Loading...</div>}
               {rows}
-              <div className="flex justify-center mx-auto pt-10">
-                <button
-                  onClick={() => setSize(size + 1)}
-                  disabled={isValidating}
-                  className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-[#6a49ff]/40 disabled:text-white/80 text-white text-xs font-medium px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
-                >
-                  {isValidating ? "Loading..." : "Show more"}
-                </button>
-              </div>
+              {data && (
+                <div className="flex justify-center mx-auto pt-10">
+                  <button
+                    onClick={() => setSize(size + 1)}
+                    disabled={isValidating}
+                    className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-[#6a49ff]/40 disabled:text-white/80 text-white text-xs font-medium px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
+                  >
+                    {isValidating ? "Loading..." : "Show more"}
+                  </button>
+                </div>
+              )}
             </div>
             {state.showVideo && (
               <div className="fixed top-0 left-0 z-50 bg-black/90 backdrop-blur-sm flex justify-center items-center w-full h-screen animate-fadeInScaleUp transition-all">

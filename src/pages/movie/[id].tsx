@@ -5,7 +5,7 @@ import {
   fetchMovieKeywords,
   fetchRecommendedMovies,
 } from "../../api";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { SideMenu } from "../../components/SideMenu";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -19,7 +19,7 @@ import clsx from "clsx";
 import moment from "moment";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
-import { Review } from "../../components/Review";
+import { Review } from "./_components/Review";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params!;
@@ -69,6 +69,9 @@ export default function Movie({
 }) {
   const router = useRouter();
 
+  console.log(movie);
+  console.log(credits);
+
   const { open, setOpen } = useHeaderContext();
   const [isFixed, setIsFixed] = useState(false);
 
@@ -84,10 +87,13 @@ export default function Movie({
     );
   };
 
-  if (typeof window !== "undefined") {
-    if (movie && credits && keywords) {
-      return (
-        <div className="bg-[#192231]-50 overflow-x-hidden animate-fadeIn">
+  if (movie && credits && keywords) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <div
+          className="bg-[#192231]-50 overflow-x-hidden animate-fadeIn"
+          suppressHydrationWarning
+        >
           <Head>
             <title>
               {movie?.title || movie?.name || movie?.original_title}
@@ -271,6 +277,8 @@ export default function Movie({
                       return (
                         <div
                           key={index}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => router.push(`/person/${item.id}`)}
                           className="bg-[#263146] shadow-lg rounded-md cursor-pointer"
                         >
@@ -310,7 +318,9 @@ export default function Movie({
                     </div>
                     <div className="flex flex-col gap-1">
                       {reviews?.results.map((review, index) => {
-                        return <Review review={review} index={index} />;
+                        return (
+                          <Review review={review} index={index} key={index} />
+                        );
                       })}
                     </div>
                   </div>
@@ -349,13 +359,58 @@ export default function Movie({
                     <label className="font-semibold">Original language</label>
                     <p>{movie?.spoken_languages[0]?.name}</p>
                   </div>
+                  {movie?.runtime && movie?.runtime > 0 && (
+                    <div>
+                      <label className="font-semibold">Runtime</label>
+                      <p>
+                        {Math.floor(movie?.runtime / 60)}h {movie?.runtime % 60}
+                        m
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <label className="font-semibold">Budget</label>
-                    <p>${movie?.budget.toLocaleString()}</p>
+                    <p>
+                      {movie?.budget && movie?.budget > 0
+                        ? `$${movie?.budget.toLocaleString()}`
+                        : "Not available"}
+                    </p>
                   </div>
                   <div>
                     <label className="font-semibold">Revenue</label>
-                    <p>${movie?.revenue.toLocaleString()}</p>
+                    <p>
+                      {movie?.revenue && movie?.revenue > 0
+                        ? `$${movie?.revenue.toLocaleString()}`
+                        : "Not available"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="font-semibold">
+                      Production companies
+                    </label>
+                    <div className="flex flex-row flex-wrap gap-2 mt-2">
+                      {movie?.production_companies?.map(
+                        (item: any, index: number) => {
+                          if (!item.logo_path) {
+                            return null;
+                          }
+                          return (
+                            <div
+                              key={index}
+                              className="flex flex-col justify-center items-center w-fit h-max bg-white rounded"
+                            >
+                              <div className="w-16 h-auto p-1.5">
+                                <img
+                                  className="w-full h-full object-cover"
+                                  src={`https://image.tmdb.org/t/p/w200${item.logo_path}`}
+                                  alt={item.name}
+                                />
+                              </div>
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -383,26 +438,28 @@ export default function Movie({
             </div>
           </main>
         </div>
-      );
-    } else {
-      return (
-        <div className="bg-[#192231]-50 overflow-x-hidden">
-          <Header open={open} setOpen={setOpen} />
-          <SideMenu />
-          <main
-            className={clsx(
-              "bg-[#192231] w-full mx-auto transition-all animate-fadeUp",
-              {
-                "blur-md": open,
-              }
-            )}
-          >
-            <div className="w-full h-screen flex items-center justify-center">
-              <CircularProgress className="text-blue-400 w-32 h-32" />
-            </div>
-          </main>
-        </div>
-      );
-    }
+      </Suspense>
+    );
   }
 }
+
+const Loading = () => {
+  return (
+    <div className="bg-[#192231]-50 overflow-x-hidden" suppressHydrationWarning>
+      <Header open={false} setOpen={() => {}} />
+      <SideMenu />
+      <main
+        className={clsx(
+          "bg-[#192231] w-full mx-auto transition-all animate-fadeUp",
+          {
+            "blur-md": false,
+          }
+        )}
+      >
+        <div className="w-full h-screen flex items-center justify-center">
+          <CircularProgress className="text-blue-400 w-32 h-32" />
+        </div>
+      </main>
+    </div>
+  );
+};

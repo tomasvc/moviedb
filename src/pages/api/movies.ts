@@ -22,13 +22,13 @@ export default async function handler(
         const posterUrl = `https://image.tmdb.org/t/p/w400${movie.poster_path}`;
 
         try {
-          // const buffer = await fetch(posterUrl).then(async (res) =>
-          //   Buffer.from(await res.arrayBuffer())
-          // );
-          // const { base64 } = await getPlaiceholder(buffer, {
-          //   size: 10,
-          // });
-          const base64 = "";
+          const buffer = await fetch(posterUrl).then(async (res) =>
+            Buffer.from(await res.arrayBuffer())
+          );
+          const { base64 } = await getPlaiceholder(buffer, {
+            size: 10,
+          });
+          // const base64 = "";
 
           return { ...movie, placeholder: base64 };
         } catch (error) {

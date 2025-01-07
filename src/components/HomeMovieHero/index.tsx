@@ -2,7 +2,7 @@ import moment from "moment";
 import Link from "next/link";
 import { PlayIcon } from "@components/Icons";
 
-export const MovieHero = ({ movie, genres, setState, videoAvailable }) => {
+export const HomeMovieHero = ({ movie, genres, setState, videoAvailable }) => {
   return (
     <div
       id={`hero-${movie.id}`}
