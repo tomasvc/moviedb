@@ -69,13 +69,7 @@ export const api = {
     "/discover/movie?include_adult=false&include_video=false&language=en-US&sort_by=popularity.desc",
   trendingMovies:
     "/trending/movie/week?include_adult=false&include_video=false&language=en-US",
-  upcomingMovies: `/discover/movie?include_adult=false&include_video=false&language=en-US&sort_by=popularity.desc&with_release_type=2|3&release_date.gte=${
-    new Date().toISOString().split("T")[0]
-  }&release_date.lte=${
-    new Date(new Date().setMonth(new Date().getMonth() + 3))
-      .toISOString()
-      .split("T")[0]
-  }`,
+  upcomingMovies: `/movie/upcoming?language=en-US`,
   multiSearch: "/trending/movie/week",
   movieGenres: "/genre/movie/list",
   movieList: (id: string) => `/list/${id}`,
