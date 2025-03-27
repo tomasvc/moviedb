@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3001",
     "test": "next test",
     "build:css": "postcss styles/globals.css -o styles/styles.css",
     "watch:css": "tailwindcss -i src/styles/globals.css -o src/styles/styles.css --watch"
@@ -48,6 +48,7 @@
     "swr": "^2.2.5",
     "type-fest": "^3.12.0",
     "videojs-youtube": "^3.0.1",
+    "yarn": "^1.22.22",
     "zustand": "^4.4.1"
   },
   "devDependencies": {
