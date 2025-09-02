@@ -5,7 +5,6 @@ import {
   fetchMovieKeywords,
   fetchRecommendedMovies,
 } from "@/api";
-import { Suspense } from "react";
 import { SideMenu } from "@/components/SideMenu";
 import Link from "next/link";
 import { Header } from "@/components/Header";
@@ -42,9 +41,7 @@ export default async function MoviePage({ params }: Props) {
   }
 
   return (
-    <Suspense fallback={<Loading />}>
-      <MovieClient movieId={movieId} movie={movie} />
-    </Suspense>
+    <MovieClient movieId={movieId} movie={movie} />
   );
 }
 

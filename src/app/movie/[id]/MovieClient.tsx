@@ -109,7 +109,7 @@ export function MovieClient({
                 alt={movie?.title || movie?.name || movie?.original_title}
                 width={400}
                 height={600}
-                className="rounded-md w-auto h-auto xl:ml-auto"
+                className="rounded-md w-full h-auto xl:ml-auto"
               />
             </div>
             <div className="px-4 xl:pl-10 my-4 text-white w-full lg:w-2/3 flex flex-col justify-between">
