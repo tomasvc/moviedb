@@ -1,12 +1,12 @@
+'use client';
+
 import { useState } from "react";
-import { MovieItem } from "../../components/MovieItem";
-import { Header } from "../../components/Header";
-import { useHeaderContext } from "../../contexts/headerContext";
-import { SideMenu } from "../../components/SideMenu";
+import { MovieItem } from "@/components/MovieItem";
+import { Header } from "@/components/Header";
+import { useHeaderContext } from "@/contexts/headerContext";
+import { SideMenu } from "@/components/SideMenu";
 import { signIn, useSession } from "next-auth/react";
-import { SearchIcon, PlayIcon } from "../../components/Icons";
-import Head from "next/head";
-import { url } from "inspector";
+import { SearchIcon, PlayIcon } from "@/components/Icons";
 import moment from "moment";
 
 export default function Favorites() {
@@ -18,10 +18,6 @@ export default function Favorites() {
 
   return (
     <div className="bg-[#192231] font-roboto">
-      <Head>
-        <title>Movies</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
         <SideMenu selected="favorites" />
         <div className="w-full">

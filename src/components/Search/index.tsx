@@ -9,10 +9,10 @@ import { parseOutput } from "@utils/parseOutput";
 import { movieSearch, personSearch } from "@api";
 import { XIcon, WarningIcon } from "@components/Icons";
 
-const openai = new OpenAI({
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   dangerouslyAllowBrowser: true,
-});
+}) : null;
 
 type Result = {
   id: number;
@@ -46,6 +46,11 @@ export const Search = ({
   const [loading, setLoading] = useState(false);
 
   async function searchQuery(query: string) {
+    if (!openai) {
+      setOutput("OpenAI API not configured");
+      return;
+    }
+    
     await openai.chat.completions
       .create({
         messages: [

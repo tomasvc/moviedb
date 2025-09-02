@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, createContext, useContext, ReactNode } from "react";
 
 export const HeaderContext = createContext<{

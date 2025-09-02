@@ -1,7 +1,9 @@
+'use client';
+
 import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { Header } from "../../components/Header";
-import { SettingsPanel } from "../../components/Account/SettingsPanel";
+import { Header } from "@/components/Header";
+import { SettingsPanel } from "@/components/Account/SettingsPanel";
 
 export default function Account() {
   const { status, data } = useSession();

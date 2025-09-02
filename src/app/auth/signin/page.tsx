@@ -1,6 +1,8 @@
+'use client';
+
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { Header } from "../../components/Header";
+import { Header } from "@/components/Header";
 
 export default function SignIn() {
   const [open, setOpen] = useState<boolean | null>();

@@ -2,7 +2,7 @@ import NextAuth, { User } from "next-auth";
 import Auth0Provider from "next-auth/providers/auth0";
 import { JWT } from "next-auth/jwt";
 
-export default NextAuth({
+const handler = NextAuth({
   providers: [
     Auth0Provider({
       clientId: process.env.AUTH0_CLIENT_ID as string,
@@ -40,3 +40,5 @@ export default NextAuth({
     },
   },
 });
+
+export { handler as GET, handler as POST };

@@ -1,6 +1,8 @@
+'use client';
+
 import React from "react";
-import { Header } from "../../components/Header";
-import { useHeaderContext } from "../../contexts/headerContext";
+import { Header } from "@/components/Header";
+import { useHeaderContext } from "@/contexts/headerContext";
 
 export default function Login() {
   const { open, setOpen } = useHeaderContext();

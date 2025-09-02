@@ -1,14 +1,12 @@
 global.structuredClone =
   global.structuredClone || ((obj) => JSON.parse(JSON.stringify(obj)));
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { getPlaiceholder } from "plaiceholder";
 import axios from "axios";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const { page } = req.query;
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const page = searchParams.get('page');
 
   try {
     const response = await axios.get(
@@ -38,9 +36,9 @@ export default async function handler(
       })
     );
 
-    res.status(200).json({ ...response.data, results: moviesWithPlaceholders });
+    return NextResponse.json({ ...response.data, results: moviesWithPlaceholders });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: error.message });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from "react";
 import { SearchIcon } from "../Icons";
 import { Search } from "../Search";

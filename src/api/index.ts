@@ -2,8 +2,6 @@ const API_KEY = process.env.TMDB_API_KEY;
 const BASE_URL = "https://api.themoviedb.org/3";
 
 import axios, { AxiosResponse } from "axios";
-import { useCallback, useEffect } from "react";
-import { useState } from "react";
 
 export const fetcher = async (url: string) => {
   try {
@@ -182,27 +180,4 @@ export const fetchMovieGenres = async (): Promise<any> => {
   return fetchData(api.movieGenres);
 };
 
-export const useApi = <T>(endpoint: string, params?: Record<string, any>) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<T | null>(null);
-
-  const fetchDataCallback = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await fetchData<T>(endpoint, params);
-      setData(result);
-    } catch (error) {
-      setError(error as Error);
-    } finally {
-      setLoading(false);
-    }
-  }, [endpoint, params]);
-
-  useEffect(() => {
-    fetchDataCallback();
-  }, [fetchDataCallback]);
-
-  return { loading, error, data };
-};
+// Removed useApi hook - convert to client-side hook if needed

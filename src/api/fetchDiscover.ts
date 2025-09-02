@@ -13,13 +13,13 @@ export const fetchDiscover = async (
   } = { type: "" },
   page: number = 1
 ) => {
-  // Extract selected genre IDs
+
   const selectedGenres = genres
     .filter((genre) => genre.selected)
     .map((genre) => genre.id)
     .join(",");
 
-  // Construct release year query parameters
+
   const releaseYearParams =
     releaseYear.type === "range" && releaseYear.from && releaseYear.to
       ? {
@@ -30,7 +30,7 @@ export const fetchDiscover = async (
       ? { year: releaseYear.releaseYear }
       : {};
 
-  // Build query parameters
+
   const queryParams = {
     api_key: API_KEY || "",
     language: "en-US",
@@ -40,7 +40,7 @@ export const fetchDiscover = async (
     ...releaseYearParams,
   };
 
-  // Fetch data from the API
+
   try {
     const response = await axios.get(
       "https://api.themoviedb.org/3/discover/movie",

@@ -1,18 +1,19 @@
+'use client';
+
 import { useEffect, useState, useRef } from "react";
-import { api, fetchMovieGenres, fetchMovieVideos } from "@api";
-import { MovieItem } from "@components/MovieItem";
-import { HomeMovieHero } from "@components/HomeMovieHero";
-import { Header } from "@components/Header";
-import { useHeaderContext } from "@contexts/headerContext";
-import { SideMenu } from "@components/SideMenu";
-import { Video } from "@components/Video";
-import { HomeHero } from "@components/HomeHero";
+import { api, fetchMovieGenres, fetchMovieVideos } from "@/api";
+import { MovieItem } from "@/components/MovieItem";
+import { HomeMovieHero } from "@/components/HomeMovieHero";
+import { Header } from "@/components/Header";
+import { useHeaderContext } from "@/contexts/headerContext";
+import { SideMenu } from "@/components/SideMenu";
+import { Video } from "@/components/Video";
+import { HomeHero } from "@/components/HomeHero";
 import useSWRInfinite from "swr/infinite";
 import axios from "axios";
-import Head from "next/head";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
-import { XIcon } from "@components/Icons";
+import { XIcon } from "@/components/Icons";
 
 type stateProps = {
   movies: any[];
@@ -106,7 +107,7 @@ export default function Home() {
   };
 
   const BASE_URL = "https://api.themoviedb.org/3";
-  const API_KEY = process.env.TMDB_API_KEY;
+  const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 
   const { data, isValidating, error, size, setSize } = useSWRInfinite(
     (index) =>
@@ -270,10 +271,6 @@ export default function Home() {
   if (typeof window !== "undefined") {
     return (
       <div className="bg-[#192231] font-roboto overflow-x-hidden">
-        <Head>
-          <title>Movies</title>
-          <link rel="icon" href="/favicon.ico" />
-        </Head>
         <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
           <SideMenu selected="home" />
           <div className="w-full relative">
