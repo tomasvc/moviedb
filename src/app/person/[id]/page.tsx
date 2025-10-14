@@ -1,34 +1,65 @@
-import { fetchPersonDetails, fetchPersonExternals, fetchPersonCombinedCredits, fetchPersonImages } from "@/api";
+"use client";
+
+import {
+  fetchPersonDetails,
+  fetchPersonExternals,
+  fetchPersonCombinedCredits,
+  fetchPersonImages,
+} from "@/api";
 import { PersonClient } from "./PersonClient";
-import { Metadata } from "next";
+import Loading from "@app/loading";
+import { useQuery } from "@tanstack/react-query";
+import { use } from "react";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const person = await fetchPersonDetails(id);
-  
-  return {
-    title: person?.name || "Person",
-    description: person?.biography?.slice(0, 150) || "Person details",
-  };
-}
+export default function PersonPage({ params }: Props) {
+  const { id } = use(params);
 
-export default async function PersonPage({ params }: Props) {
-  const { id } = await params;
-  const person = await fetchPersonDetails(id);
-  const externals = await fetchPersonExternals(id);
-  const credits = await fetchPersonCombinedCredits(id);
-  const images = await fetchPersonImages(id);
+  const {
+    data: person,
+    isLoading: personLoading,
+    error: personError,
+  } = useQuery({
+    queryKey: ["person", id],
+    queryFn: () => fetchPersonDetails(id),
+    enabled: !!id,
+  });
+
+  const { data: externals, isLoading: externalsLoading } = useQuery({
+    queryKey: ["externals", id],
+    queryFn: () => fetchPersonExternals(id),
+    enabled: !!id && !!person,
+  });
+
+  const { data: credits, isLoading: creditsLoading } = useQuery({
+    queryKey: ["credits", id],
+    queryFn: () => fetchPersonCombinedCredits(id),
+    enabled: !!id && !!person,
+  });
+
+  const { data: images, isLoading: imagesLoading } = useQuery({
+    queryKey: ["images", id],
+    queryFn: () => fetchPersonImages(id),
+    enabled: !!id && !!person,
+  });
+
+  if (!person || personLoading) {
+    return <Loading />;
+  }
+
+  if (personError) {
+    return <div>Error loading person: {personError.message}</div>;
+  }
 
   return (
-    <PersonClient 
-      person={person}
-      externals={externals}
-      credits={credits}
-      images={images}
+    <PersonClient
+      person={person || {}}
+      externals={externals || {}}
+      credits={credits || {}}
+      images={images || {}}
       personId={id}
     />
   );

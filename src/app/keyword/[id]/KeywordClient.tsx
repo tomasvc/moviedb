@@ -1,9 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { useHeaderContext } from "@/contexts/headerContext";
-import { fetchItemsByKeyword } from "@/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import moment from "moment";
@@ -15,11 +14,9 @@ import { Pagination } from "@mui/material";
 export function KeywordClient({
   initialResults,
   keyword,
-  keywordId
 }: {
   initialResults: any;
   keyword: any;
-  keywordId: string;
 }) {
   const { open, setOpen } = useHeaderContext();
   const router = useRouter();
@@ -27,20 +24,9 @@ export function KeywordClient({
   const [results, setResults] = useState(initialResults);
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    async function fetchData() {
-      const newResults = await fetchItemsByKeyword(keywordId, page);
-      setResults(newResults);
-    }
-
-    if (page > 1) {
-      fetchData();
-    }
-  }, [page, keywordId]);
-
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number,
+    value: number
   ) => {
     setPage(value);
   };
@@ -52,7 +38,7 @@ export function KeywordClient({
       <main className="bg-[#192231] w-full mx-auto transition-all animate-fadeUp text-white pt-24">
         <div className="w-full 2xl:w-2/3 mx-auto px-4 xl:px-10">
           <div className="flex items-center gap-4 mb-8">
-            <button 
+            <button
               onClick={() => router.back()}
               className="p-2 hover:bg-gray-700 rounded-full transition"
             >
@@ -102,6 +88,17 @@ export function KeywordClient({
                 color="primary"
                 size="large"
                 className="text-white"
+                sx={{
+                  "& .MuiPaginationItem-root": {
+                    color: "white",
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                    minWidth: { xs: "28px", sm: "32px" },
+                    height: { xs: "28px", sm: "32px" },
+                  },
+                  "& .MuiPaginationItem-page.Mui-selected": {
+                    backgroundColor: "#5937ef",
+                  },
+                }}
               />
             </div>
           )}

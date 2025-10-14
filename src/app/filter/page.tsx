@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { fetchDiscover } from "@/api/fetchDiscover";
 import { SideMenu } from "@/components/SideMenu";
@@ -8,15 +8,20 @@ import { FilterMenu } from "@/components/FilterMenu";
 import { Header } from "@/components/Header";
 import { useHeaderContext } from "@/contexts/headerContext";
 import { MovieItem } from "@/components/MovieItem";
-import { XIcon } from "@/components/Icons";
 import { Pagination } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { Genre, Movie } from "@/types/api";
 
 export default function Filter() {
   const { open, setOpen } = useHeaderContext();
-  const [results, setResults] = useState<any>();
-  const [genres, setGenres] = useState<any>([]);
-  const [releaseYear, setReleaseYear] = useState<any>([]);
-  const [country, setCountry] = useState<any>(null);
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [releaseYear, setReleaseYear] = useState<any>({
+    type: "exact",
+    value: new Date().getFullYear(),
+  });
+  const [country, setCountry] = useState<string>("United States");
   const [page, setPage] = useState(1);
 
   const countryCodes = {
@@ -31,27 +36,36 @@ export default function Filter() {
     "United States": "US",
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await fetchDiscover(
-        genres,
-        country && countryCodes[country],
-        releaseYear!,
+  const {
+    data: results,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["discover", genres, country, releaseYear, page],
+    queryFn: () =>
+      fetchDiscover(
+        genres.map((genre: Genre) => ({ ...genre, selected: false })),
+        country ? countryCodes[country as keyof typeof countryCodes] : "",
+        releaseYear,
         page
-      );
-      setResults(data);
-    };
-    fetchData();
-  }, [genres, country, releaseYear, page]);
+      ),
+    enabled: true,
+  });
 
   const handleFilterClick = () => {
-    const newArr = genres.map((item) => ({ ...item, selected: false }));
+    const newArr = genres.map((item: Genre) => ({
+      ...item,
+      selected: false as boolean,
+    }));
     setGenres(newArr);
+    setReleaseYear({ type: "exact", value: new Date().getFullYear() });
+    setCountry("United States");
+    setPage(1);
   };
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number,
+    value: number
   ) => {
     setPage(value);
   };
@@ -60,48 +74,145 @@ export default function Filter() {
     <div className="bg-[#192231] font-roboto overflow-x-hidden">
       <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
         <SideMenu selected="filter" />
-        <div className="w-full">
+        <div className="w-full lg:ml-16">
           <Header open={open} setOpen={setOpen} />
-          <div className="w-full pt-20">
-            <FilterMenu
-              genres={genres}
-              setGenres={setGenres}
-              setReleaseYear={setReleaseYear}
-              country={country}
-              setCountry={setCountry}
-            />
-            <div className="px-4 xl:px-10 pb-10">
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-white text-2xl font-bold">Filter Results</h1>
-                {(genres.some((g) => g.selected) || country || releaseYear.length > 0) && (
+          <div className="w-full pt-16 lg:pt-20">
+            <div className={`${showFilters ? "block" : "hidden"} lg:block`}>
+              <FilterMenu
+                genres={genres}
+                setGenres={setGenres}
+                setReleaseYear={setReleaseYear}
+                country={country}
+                setCountry={setCountry}
+                onClose={() => setShowFilters(false)}
+              />
+            </div>
+            {showFilters && (
+              <div
+                className="fixed inset-0 bg-black/50 z-10 lg:hidden"
+                onClick={() => setShowFilters(false)}
+              />
+            )}
+            <div className="px-4 lg:px-6 xl:px-10 pb-10 max-w-7xl mx-auto lg:ml-auto">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <div className="flex items-center gap-4">
+                  <h1 className="text-white text-xl sm:text-2xl font-bold">
+                    Filter Results
+                  </h1>
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="lg:hidden text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm transition flex items-center gap-2"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"
+                      />
+                    </svg>
+                    Filters
+                  </button>
+                </div>
+                {(genres.some((g: Genre) => g.selected) ||
+                  country !== "United States" ||
+                  releaseYear.type !== "exact" ||
+                  releaseYear.value !== new Date().getFullYear()) && (
                   <button
                     onClick={handleFilterClick}
                     className="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md text-sm transition"
                   >
-                    Clear Filters
+                    Reset to Defaults
                   </button>
                 )}
               </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                {results?.results?.map((movie: any, index: number) => (
-                  <Link key={movie.id} href={`/movie/${movie.id}`}>
-                    <MovieItem movie={movie} />
-                  </Link>
-                ))}
-              </div>
 
-              {results?.total_pages > 1 && (
-                <div className="flex justify-center mt-8">
-                  <Pagination
-                    count={Math.min(results.total_pages, 500)}
-                    page={page}
-                    onChange={handlePageChange}
-                    color="primary"
-                    size="large"
-                  />
-                </div>
-              )}
+              <div className="min-h-[500px]">
+                {isLoading && (
+                  <div className="text-white text-center py-8 px-4">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    <p className="mt-2 text-sm sm:text-base">
+                      Loading movies...
+                    </p>
+                  </div>
+                )}
+
+                {error && !isLoading && (
+                  <div className="text-red-500 text-center py-8 px-4">
+                    <p className="text-sm sm:text-base mb-4">
+                      Error: {error.message}
+                    </p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md text-sm transition"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                )}
+
+                {!isLoading &&
+                  !error &&
+                  results?.results &&
+                  results.results.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                      {results.results.map((movie: Movie, index: number) => (
+                        <Link key={movie.id} href={`/movie/${movie.id}`}>
+                          <MovieItem movie={movie} />
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                {!isLoading &&
+                  !error &&
+                  results?.results &&
+                  results.results.length === 0 && (
+                    <div className="text-white text-center py-8 px-4">
+                      <p className="text-sm sm:text-base mb-4">
+                        No movies found with the selected filters
+                      </p>
+                      <button
+                        onClick={handleFilterClick}
+                        className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm transition"
+                      >
+                        Reset to Defaults
+                      </button>
+                    </div>
+                  )}
+
+                {!isLoading && !error && results?.total_pages > 1 && (
+                  <div className="flex justify-center mt-8 px-2">
+                    <Pagination
+                      count={Math.min(results.total_pages, 500)}
+                      page={page}
+                      onChange={handlePageChange}
+                      color="primary"
+                      size="medium"
+                      siblingCount={0}
+                      boundaryCount={1}
+                      showFirstButton
+                      showLastButton
+                      sx={{
+                        "& .MuiPaginationItem-root": {
+                          color: "white",
+                          fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                          minWidth: { xs: "28px", sm: "32px" },
+                          height: { xs: "28px", sm: "32px" },
+                        },
+                        "& .MuiPaginationItem-page.Mui-selected": {
+                          backgroundColor: "#5937ef",
+                        },
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

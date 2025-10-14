@@ -5,8 +5,8 @@ export const MovieItem = ({
   movie,
   genres,
 }: {
-  movie: any;
-  genres?: any;
+  movie: Record<string, any>;
+  genres?: Record<string, any>[];
   genreIds?: number[];
   placeholder?: string;
 }) => {
@@ -22,8 +22,6 @@ export const MovieItem = ({
           className="rounded-sm shadow-xl"
           width={180}
           height={270}
-          // placeholder="blur"
-          // blurDataURL={movie.placeholder ?? ""}
           priority
         />
       ) : (

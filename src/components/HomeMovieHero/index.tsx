@@ -2,7 +2,17 @@ import moment from "moment";
 import Link from "next/link";
 import { PlayIcon } from "@components/Icons";
 
-export const HomeMovieHero = ({ movie, genres, setState, videoAvailable }) => {
+export const HomeMovieHero = ({
+  movie,
+  genres,
+  setState,
+  videoAvailable,
+}: {
+  movie: Record<string, any>;
+  genres: Record<string, any>[];
+  setState: (fn: (prevState: any) => any) => void;
+  videoAvailable: boolean;
+}) => {
   return (
     <div
       id={`hero-${movie.id}`}
@@ -31,9 +41,9 @@ export const HomeMovieHero = ({ movie, genres, setState, videoAvailable }) => {
             <p>•</p>
             <p>
               {genres
-                .filter((genre) =>
-                  movie.genre_ids.some(
-                    (movieGenre: any) => movieGenre === genre.id
+                .filter((genre: any) =>
+                  movie.genre_ids?.some(
+                    (movieGenre: number) => movieGenre === genre.id
                   )
                 )
                 .map((genre) => genre.name)
@@ -56,7 +66,7 @@ export const HomeMovieHero = ({ movie, genres, setState, videoAvailable }) => {
             <button
               className="flex flex-row lg:flex-col gap-2 lg:gap-0 items-center"
               onClick={() =>
-                setState((prevState) => ({
+                setState((prevState: any) => ({
                   ...prevState,
                   showVideo: true,
                 }))

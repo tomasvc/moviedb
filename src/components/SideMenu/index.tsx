@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HomeIcon, FilmIcon, HeartIcon, SettingsIcon } from "../Icons";
+import { HomeIcon, FilmIcon } from "../Icons";
 
 export const SideMenu: React.FC<{ selected?: string }> = ({ selected }) => {
   return (
@@ -21,23 +21,7 @@ export const SideMenu: React.FC<{ selected?: string }> = ({ selected }) => {
         >
           <FilmIcon />
         </Link>
-        {/* <Link
-          href="/favorites"
-          className={`p-5 hover:bg-[#5937ef]/20 transition ease-out duration-200 ${
-            selected === "favorites" && "bg-[#5937ef] hover:bg-[#5937ef]"
-          }`}
-        >
-          <HeartIcon />
-        </Link> */}
       </div>
-      <Link
-        href="#"
-        className={`p-5 hover:bg-[#5937ef]/20 transition ${
-          selected === "settings" && "bg-[#5937ef]"
-        }`}
-      >
-        <SettingsIcon />
-      </Link>
     </div>
   );
 };

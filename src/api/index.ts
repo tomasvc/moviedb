@@ -2,28 +2,18 @@ const API_KEY = process.env.TMDB_API_KEY;
 const BASE_URL = "https://api.themoviedb.org/3";
 
 import axios, { AxiosResponse } from "axios";
+import {
+  Movie,
+  Person,
+  Genre,
+  Credits,
+  APIResponse,
+  ApiData,
+  MovieKeywordsResponse,
+  MovieVideosResponse,
+} from "@/types/api";
 
-export const fetcher = async (url: string) => {
-  try {
-    const response = await axios.get(url);
-    return response.data;
-  } catch (error) {
-    if (error.response) {
-      console.error("Error response:", error.response);
-      throw new Error(
-        `Data fetching failed with status ${error.response.status}`
-      );
-    } else if (error.request) {
-      console.error("Error request:", error.request);
-      throw new Error("No response received for the data request.");
-    } else {
-      console.error("Error message:", error.message);
-      throw new Error("Error in setting up the data request.");
-    }
-  }
-};
-
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: BASE_URL,
   params: {
     api_key: API_KEY,
@@ -89,95 +79,116 @@ export const api = {
   collection: (id: string) => `/collection/${id}`,
 };
 
-export const fetchPopularMovies = async (page: number): Promise<any> => {
+export const fetchPopularMovies = async (
+  page: number = 1
+): Promise<APIResponse<Movie>> => {
   return fetchData(api.popularMovies, { page });
 };
 
-export const fetchTrendingMovies = async (): Promise<any> => {
-  return fetchData(`${api.trendingMovies}`);
+export const fetchTrendingMovies = async (
+  page: number = 1
+): Promise<APIResponse<Movie>> => {
+  return fetchData(`${api.trendingMovies}`, { page });
 };
 
-export const fetchUpcomingMovies = async (): Promise<any> => {
-  return fetchData(`${api.upcomingMovies}`);
+export const fetchUpcomingMovies = async (
+  page: number = 1
+): Promise<APIResponse<Movie>> => {
+  return fetchData(`${api.upcomingMovies}`, { page });
 };
 
-export const multiSearch = async (query: string, page: number = 1) => {
+export const multiSearch = async (
+  query: string,
+  page: number = 1
+): Promise<APIResponse> => {
   return fetchData(api.multiSearch, { query, page });
 };
 
-export const movieSearch = async (query: string, page: number = 1) => {
+export const movieSearch = async (
+  query: string,
+  page: number = 1
+): Promise<APIResponse<Movie>> => {
   return fetchData("/search/movie", { query, page });
 };
 
-export const personSearch = async (query: string, page: number = 1) => {
+export const personSearch = async (
+  query: string,
+  page: number = 1
+): Promise<APIResponse<Person>> => {
   return fetchData("/search/person", { query, page });
 };
 
-export const fetchMovieDetails = async (id: string): Promise<any> => {
+export const fetchMovieDetails = async (id: string): Promise<Movie> => {
   return fetchData(api.movie(id));
 };
 
-export const fetchMovieCredits = async (id: string): Promise<any> => {
+export const fetchMovieCredits = async (id: string): Promise<Credits> => {
   return fetchData(api.credits(id));
 };
 
-export const fetchMovieReviews = async (id: string): Promise<any> => {
+export const fetchMovieReviews = async (id: string): Promise<ApiData> => {
   return fetchData(api.reviews(id));
 };
 
-export const fetchMovieKeywords = async (id: string): Promise<any> => {
+export const fetchMovieKeywords = async (
+  id: string
+): Promise<MovieKeywordsResponse> => {
   return fetchData(api.keywords(id));
 };
 
-export const fetchPersonDetails = async (id: string): Promise<any> => {
+export const fetchPersonDetails = async (id: string): Promise<Person> => {
   return fetchData(api.person(id));
 };
 
-export const fetchPersonExternals = async (id: string): Promise<any> => {
+export const fetchPersonExternals = async (id: string): Promise<ApiData> => {
   return fetchData(api.personExternals(id));
 };
 
-export const fetchPersonCombinedCredits = async (id: string): Promise<any> => {
+export const fetchPersonCombinedCredits = async (
+  id: string
+): Promise<Credits> => {
   return fetchData(api.personCombinedCredits(id));
 };
 
 export const fetchItemsByKeyword = async (
   keywordId: string,
   page: number
-): Promise<any> => {
+): Promise<APIResponse<Movie>> => {
   return fetchData(api.itemsByKeyword(keywordId), { page });
 };
 
-export const fetchKeyword = async (id: string): Promise<any> => {
+export const fetchKeyword = async (id: string): Promise<ApiData> => {
   return fetchData(api.keyword(id));
 };
 
-export const fetchSimilarMovies = async (id: string): Promise<any> => {
+export const fetchSimilarMovies = async (
+  id: string
+): Promise<APIResponse<Movie>> => {
   return fetchData(api.similarMovies(id));
 };
 
-export const fetchRecommendedMovies = async (id: string): Promise<any> => {
+export const fetchRecommendedMovies = async (id: string): Promise<ApiData> => {
   return fetchData(api.recommendedMovies(id));
 };
 
-export const fetchMovieImages = async (id: string): Promise<any> => {
+export const fetchMovieImages = async (id: string): Promise<ApiData> => {
   return fetchData(api.movieImages(id));
 };
 
-export const fetchMovieVideos = async (id: string): Promise<any> => {
+export const fetchMovieVideos = async (
+  id: string
+): Promise<MovieVideosResponse> => {
   return fetchData(api.movieVideos(id));
 };
 
-export const fetchPersonImages = async (id: string): Promise<any> => {
+export const fetchPersonImages = async (id: string): Promise<ApiData> => {
   return fetchData(api.personImages(id));
 };
 
-export const fetchCollection = async (id: string): Promise<any> => {
+export const fetchCollection = async (id: string): Promise<ApiData> => {
   return fetchData(api.collection(id));
 };
 
-export const fetchMovieGenres = async (): Promise<any> => {
+export const fetchMovieGenres = async (): Promise<{ genres: Genre[] }> => {
   return fetchData(api.movieGenres);
 };
-
-// Removed useApi hook - convert to client-side hook if needed

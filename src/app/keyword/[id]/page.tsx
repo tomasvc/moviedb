@@ -1,31 +1,39 @@
+"use client";
+
 import { fetchItemsByKeyword, fetchKeyword } from "@/api";
 import { KeywordClient } from "./KeywordClient";
-import { Metadata } from "next";
+import Loading from "@app/loading";
+import { useQuery } from "@tanstack/react-query";
+import { use } from "react";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const keyword = await fetchKeyword(id);
-  
-  return {
-    title: `${keyword?.name} Movies` || "Keyword",
-    description: `Movies and TV shows related to ${keyword?.name}` || "Keyword results",
-  };
-}
+export default function KeywordPage({ params }: Props) {
+  const { id } = use(params);
+  const {
+    data: keyword,
+    isLoading: keywordLoading,
+    error: keywordError,
+  } = useQuery({
+    queryKey: ["keyword", id],
+    queryFn: () => fetchKeyword(id),
+    enabled: !!id,
+  });
+  const { data: results, isLoading: resultsLoading } = useQuery({
+    queryKey: ["results", id],
+    queryFn: () => fetchItemsByKeyword(id, 1),
+    enabled: !!id && !!keyword,
+  });
 
-export default async function KeywordPage({ params }: Props) {
-  const { id } = await params;
-  const results = await fetchItemsByKeyword(id, 1);
-  const keyword = await fetchKeyword(id);
+  if (keywordLoading || resultsLoading) {
+    return <Loading />;
+  }
 
-  return (
-    <KeywordClient 
-      initialResults={results}
-      keyword={keyword}
-      keywordId={id}
-    />
-  );
+  if (keywordError) {
+    return <div>Error loading keyword: {keywordError.message}</div>;
+  }
+
+  return <KeywordClient initialResults={results} keyword={keyword} />;
 }

@@ -1,5 +1,4 @@
-const API_KEY = process.env.TMDB_API_KEY;
-import axios from "axios";
+import { apiClient } from "@/api/index";
 import qs from "qs";
 
 export const fetchDiscover = async (
@@ -13,12 +12,10 @@ export const fetchDiscover = async (
   } = { type: "" },
   page: number = 1
 ) => {
-
   const selectedGenres = genres
     .filter((genre) => genre.selected)
     .map((genre) => genre.id)
     .join(",");
-
 
   const releaseYearParams =
     releaseYear.type === "range" && releaseYear.from && releaseYear.to
@@ -30,30 +27,18 @@ export const fetchDiscover = async (
       ? { year: releaseYear.releaseYear }
       : {};
 
-
   const queryParams = {
-    api_key: API_KEY || "",
-    language: "en-US",
     with_genres: selectedGenres || undefined,
     with_origin_country: country || undefined,
     page: page.toString(),
     ...releaseYearParams,
   };
 
+  const response = await apiClient.get("/discover/movie", {
+    params: queryParams,
+    paramsSerializer: (params) =>
+      qs.stringify(params, { arrayFormat: "comma" }),
+  });
 
-  try {
-    const response = await axios.get(
-      "https://api.themoviedb.org/3/discover/movie",
-      {
-        params: queryParams,
-        paramsSerializer: (params) =>
-          qs.stringify(params, { arrayFormat: "comma" }),
-      }
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch: ${error.response?.statusText || error.message}`
-    );
-  }
+  return response.data;
 };

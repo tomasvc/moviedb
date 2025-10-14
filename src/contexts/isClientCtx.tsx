@@ -1,10 +1,14 @@
-'use client';
+"use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
 
 const IsClientCtx = createContext(false);
 
-export const IsClientCtxProvider = ({ children }) => {
+export const IsClientCtxProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => setIsClient(true), []);
   return (

@@ -22,14 +22,14 @@ export const HomeHero = ({
       }}
     >
       <div className="absolute top-0 left-0 w-screen h-full bg-black/50" />
-      <p className="text-white text-5xl font-semibold tracking-wider uppercase mx-auto z-10">
+      <p className="text-white text-4xl sm:text-5xl font-semibold tracking-wider uppercase mx-auto z-10">
         <span className="text-[#5937ef] font-black relative bottom-0.5">/</span>{" "}
         {selectedList}
       </p>
       <div className="flex flex-wrap items-center justify-center gap-2 mt-6 z-10">
         <button
           onClick={() =>
-            setState((prevState) => ({
+            setState((prevState: any) => ({
               ...prevState,
               selectedList: "Trending",
             }))
@@ -44,7 +44,10 @@ export const HomeHero = ({
         </button>
         <button
           onClick={() =>
-            setState((prevState) => ({ ...prevState, selectedList: "Popular" }))
+            setState((prevState: any) => ({
+              ...prevState,
+              selectedList: "Popular",
+            }))
           }
           className={`${
             selectedList === "Popular"
@@ -56,7 +59,7 @@ export const HomeHero = ({
         </button>
         <button
           onClick={() =>
-            setState((prevState) => ({
+            setState((prevState: any) => ({
               ...prevState,
               selectedList: "Upcoming",
             }))

@@ -1,5 +1,4 @@
 import { debounce } from "lodash";
-import OpenAI from "openai";
 import { useCallback, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,20 +7,7 @@ import { CircularProgress } from "@mui/material";
 import { parseOutput } from "@utils/parseOutput";
 import { movieSearch, personSearch } from "@api";
 import { XIcon, WarningIcon } from "@components/Icons";
-
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true,
-}) : null;
-
-type Result = {
-  id: number;
-  title?: string;
-  name?: string;
-  release_date?: string;
-  profile_path?: string;
-  gender?: number;
-};
+import { SearchResult, APIResponse } from "@/types/api";
 
 export const Search = ({
   setShowSearch,
@@ -31,39 +17,54 @@ export const Search = ({
   const [query, setQuery] = useState("");
   const [output, setOutput] = useState("");
   const [parsedOutput, setParsedOutput] = useState<{
-    movies: Result[];
-    people: Result[];
+    movies: SearchResult[];
+    people: SearchResult[];
   }>({
     movies: [],
     people: [],
   });
-  const [results, setResults] = useState<any>({
+  const [results, setResults] = useState<{
+    movies: SearchResult[];
+    people: SearchResult[];
+  }>({
     movies: [],
     people: [],
   });
-  const [openMenu, setOpenMenu] = useState(false);
   const [displayResultsWindow, setDisplayResultsWindow] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function searchQuery(query: string) {
-    if (!openai) {
-      setOutput("OpenAI API not configured");
-      return;
-    }
-    
-    await openai.chat.completions
-      .create({
-        messages: [
-          {
-            role: "user",
-            content: `Classify and structure the following query: '${query}'. Based on the query, return a list with these three sections if it is suitable for the query: movie titles, people (either cast, crew or both) and movie genres. Make sure the section labels end with a colon. Provide only the results without any additional text. Provide at least 10 items per list if you can. Try not not to include any innacurate information. Do not add any descriptions. If you cannot find anything based on the query, or if the provided query makes no sense, simply respond with 'Could not find any information with the provided query'.`,
-          },
-        ],
-        model: "gpt-4o-mini",
-      })
-      .then((response) => {
-        setOutput(response?.choices[0]?.message?.content!);
+    try {
+      const response = await fetch("/api/search/gpt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to search");
+      }
+
+      setOutput(data.content);
+    } catch (error: any) {
+      console.error("Search error:", error);
+
+      if (error.message.includes("Rate limit")) {
+        setOutput("Rate limit exceeded. Please try again in a few moments.");
+      } else if (error.message.includes("credits")) {
+        setOutput(
+          "Search service temporarily unavailable. Please try again later."
+        );
+      } else {
+        setOutput("Could not process your search. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   const debouncedSetQuery = useCallback(
@@ -94,38 +95,43 @@ export const Search = ({
 
   useEffect(() => {
     if (output.length > 0) {
-      setParsedOutput(
-        parseOutput(output) as { movies: Result[]; people: Result[] }
-      );
+      const parsed = parseOutput(output);
+      setParsedOutput({
+        movies: parsed.movies.map((title: string) => ({ id: 0, title })),
+        people: parsed.people.map((name: string) => ({ id: 0, name })),
+      });
     }
   }, [output]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<Array<APIResponse | null>> => {
       if (
-        Object.keys(parsedOutput).some((key) => parsedOutput[key].length > 0)
+        Object.keys(parsedOutput).some(
+          (key: string) =>
+            parsedOutput[key as keyof typeof parsedOutput].length > 0
+        )
       ) {
-        parsedOutput.movies.map((m) => console.log(m.title));
         const promises = [
-          ...parsedOutput.movies.map((m) => movieSearch(m as any)),
-          ...parsedOutput.people.map((p) => personSearch(p as any)),
+          ...parsedOutput.movies.map((m) => movieSearch(m.title || "", 1)),
+          ...parsedOutput.people.map((p) => personSearch(p.name || "", 1)),
         ];
         const data = await Promise.all(promises);
-        return data.filter((result) => result !== null);
+        return data.filter((result: any) => result !== null);
       }
+      return [];
     };
 
-    fetchData().then((data) => {
-      let movies: Result[] = [];
-      let people: Result[] = [];
+    fetchData().then((data: Array<APIResponse | null>) => {
+      let movies: SearchResult[] = [];
+      let people: SearchResult[] = [];
 
-      data?.forEach((item: { results: Result[] }) => {
-        if (item.results[0]?.gender) {
-          people.push(item.results[0] as Result);
+      data?.forEach((item: APIResponse | null) => {
+        if (item?.results?.[0] && "gender" in item.results[0]) {
+          people.push(item.results[0] as SearchResult);
         } else {
-          item.results[0] && movies.push(item.results[0] as Result);
+          item?.results?.[0] && movies.push(item.results[0] as SearchResult);
         }
-      })
+      });
 
       setResults({
         movies,
@@ -210,9 +216,9 @@ export const Search = ({
             strokeWidth={0.5}
           />
         </button>
-        <div className="container flex flex-col mx-auto w-full h-full justify-start pt-6 px-4 sm:px-0">
+        <div className="container max-w-6xl flex flex-col mx-auto w-full h-full justify-start pt-6 px-4 sm:px-0">
           <div>
-            <div className="flex items-end gap-2 pb-6 pl-0 xl:pl-2 w-[80%]">
+            <div className="flex items-end gap-2 pb-6 pl-0 xl:pl-3 w-[80%]">
               <WarningIcon className="w-4 h-4 text-slate-100/60" />
               <p className="text-slate-100/60 text-[0.5rem] md:text-xs w-w-full">
                 Search powered by AI - results may not always be accurate.
@@ -221,7 +227,7 @@ export const Search = ({
             <input
               type="text"
               placeholder="Search movies, actors, etc"
-              className="w-full h-fit bg-transparent text-white/90 text-lg sm:text-3xl lg:text-5xl !border-0 !ring-0 !outline-0 placeholder-slate-500 mb-10 pt-4"
+              className="w-full h-fit bg-transparent text-white/90 text-lg sm:text-3xl lg:text-5xl !border-0 !ring-0 !outline-0 placeholder-slate-500 mb-4 pt-4"
               onChange={handleInputChange}
             />
           </div>
@@ -240,45 +246,52 @@ export const Search = ({
               <div>
                 {results.movies?.length > 0 && (
                   <>
-                    <p className="text-slate-200 font-medium uppercase tracking-wider pl-2 pb-2 animate-fadeIn duration-200 ease-out">
+                    <p className="text-slate-200 font-medium uppercase tracking-wider pl-4 pb-2 animate-fadeIn duration-200 ease-out">
                       Movies
                     </p>
-                    <div className="flex flex-col md:flex-row flex-wrap w-full xl:w-1/2">
-                      {results.movies?.map((m, index) => {
-                        return (
-                          <Link
-                            key={index}
-                            href={`/movie/${m?.id}`}
-                            className="relative w-full md:w-1/2 flex gap-3 rounded p-4 cursor-pointer text-white hover:bg-slate-800/70 transition animate-fadeIn duration-200 ease-out"
-                            onClick={() => setDisplayResultsWindow(false)}
-                          >
-                            {m?.poster_path ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full p-2 md:p-4">
+                      {results.movies?.map((m: SearchResult, index: number) => (
+                        <Link
+                          key={index}
+                          href={`/movie/${m?.id}`}
+                          className="relative flex items-center gap-4 rounded-lg bg-[#232b3b] shadow-md hover:shadow-lg hover:bg-indigo-900/80 transition-all p-2 sm:p-4 cursor-pointer text-white group animate-fadeIn duration-200 ease-out border border-transparent hover:border-indigo-500"
+                          onClick={() => setDisplayResultsWindow(false)}
+                        >
+                          {m?.poster_path ? (
+                            <div className="flex flex-shrink-0 items-center justify-center rounded-lg overflow-hidden w-16 h-24 sm:w-24 sm:h-36 bg-black/50 group-hover:scale-105 transition-transform">
                               <Image
                                 src={`https://image.tmdb.org/t/p/w400${m?.poster_path}`}
                                 alt={m?.title || "Movie poster"}
-                                className="rounded-sm"
-                                width={50}
-                                height={100}
-                                unoptimized={true}
+                                width={96}
+                                height={144}
+                                className="object-cover w-full h-full"
                                 priority
                               />
-                            ) : (
-                              <div className="w-[50px] h-[100px] bg-black/70 rounded-sm"></div>
-                            )}
+                            </div>
+                          ) : (
+                            <div className="flex-shrink-0 w-16 h-24 sm:w-24 sm:h-36 bg-black/70 rounded-lg flex items-center justify-center text-slate-500 text-xs">
+                              No Image
+                            </div>
+                          )}
 
-                            <div className="text-left">
-                              <p className="font-medium text-sm leading-5">
-                                {m?.title}
-                              </p>
-                              {m?.release_date && (
-                                <p className="text-[#adff4f] text-xs font-medium uppercase tracking-wider">
+                          <div className="flex flex-col justify-center flex-1">
+                            <p className="font-semibold text-base sm:text-lg text-slate-50 group-hover:text-[#adff4f]">
+                              {m?.title}
+                            </p>
+                            <div className="flex items-center gap-2 pt-2">
+                              {m?.release_date ? (
+                                <span className="inline-block bg-[#adff4f]/10 text-[#adff4f] text-xs px-2 py-1 rounded uppercase font-bold tracking-wider shadow-sm border border-[#adff4f]/40">
                                   {moment(m?.release_date).format("YYYY")}
-                                </p>
+                                </span>
+                              ) : (
+                                <span className="inline-block text-slate-400 text-xs px-2 py-1 rounded uppercase tracking-wider border border-slate-600/30">
+                                  Unknown Year
+                                </span>
                               )}
                             </div>
-                          </Link>
-                        );
-                      })}
+                          </div>
+                        </Link>
+                      ))}
                     </div>
                   </>
                 )}
@@ -287,40 +300,43 @@ export const Search = ({
               <div className="flex flex-col pb-20">
                 {results.people.length > 0 && (
                   <>
-                    <p className="text-white uppercase tracking-wider font-light pl-2 pb-2 animate-fadeIn duration-200 ease-out">
+                    <p className="text-slate-200 font-medium uppercase tracking-wider pl-4 pb-2 animate-fadeIn duration-200 ease-out">
                       People
                     </p>
-                    <div className="flex flex-col md:flex-row flex-wrap w-full xl:w-1/2">
-                      {results.people?.map((p, index) => {
-                        return (
-                          <Link
-                            key={index}
-                            href={`/person/${p.id}`}
-                            className="relative w-full md:w-1/2 flex gap-3 rounded p-4 cursor-pointer text-white hover:bg-slate-800/80 transition animate-fadeIn duration-200 ease-out"
-                            onClick={() => setDisplayResultsWindow(false)}
-                          >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 w-full p-2 md:p-4">
+                      {results.people?.map((p: SearchResult, index: number) => (
+                        <Link
+                          key={index}
+                          href={`/person/${p.id}`}
+                          className="flex items-center bg-[#222b39] hover:bg-indigo-900/80 rounded-xl shadow-md hover:shadow-lg transition-all p-3 gap-4 group cursor-pointer border border-transparent hover:border-indigo-400 animate-fadeIn duration-200 ease-out"
+                          onClick={() => setDisplayResultsWindow(false)}
+                        >
+                          <div className="relative flex-shrink-0">
                             {p?.profile_path ? (
                               <Image
-                                src={`https://image.tmdb.org/t/p/w400${p?.profile_path}`}
+                                src={`https://image.tmdb.org/t/p/w185${p?.profile_path}`}
                                 alt={p?.name || "Profile image"}
-                                className="rounded-md shadow-xl"
-                                width={50}
-                                height={100}
-                                unoptimized={true}
+                                className="rounded-lg object-cover border-2 border-indigo-700/40 group-hover:border-[#adff4f]/70 shadow-lg w-16 h-16"
+                                width={64}
+                                height={64}
                                 priority
                               />
                             ) : (
-                              <div className="w-[50px] h-[100px] bg-black/70"></div>
+                              <div className="w-16 h-16 rounded-lg bg-black/80 flex items-center justify-center text-slate-500 text-xs border border-slate-700/20">
+                                No Image
+                              </div>
                             )}
-
-                            <div className="mr-1 text-left">
-                              <p className="font-medium text-sm leading-5">
-                                {p?.name}
-                              </p>
-                            </div>
-                          </Link>
-                        );
-                      })}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-base text-slate-50 group-hover:text-[#adff4f] truncate">
+                              {p?.name}
+                            </p>
+                          </div>
+                          <span className="ml-2 text-[#adff4f] opacity-0 group-hover:opacity-100 transition duration-150">
+                            &rarr;
+                          </span>
+                        </Link>
+                      ))}
                     </div>
                   </>
                 )}

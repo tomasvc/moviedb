@@ -1,11 +1,5 @@
-'use client';
+"use client";
 
-import {
-  fetchMovieCredits,
-  fetchMovieReviews,
-  fetchMovieKeywords,
-  fetchRecommendedMovies,
-} from "@/api";
 import { useState, useEffect } from "react";
 import { SideMenu } from "@/components/SideMenu";
 import { useRouter } from "next/navigation";
@@ -13,57 +7,34 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { MovieItem } from "@/components/MovieItem";
 import { useHeaderContext } from "@/contexts/headerContext";
-import { CircularProgress } from "@mui/material";
 import clsx from "clsx";
 import moment from "moment";
 import { Review } from "@/components/Review";
 import Image from "next/image";
-
+import { Movie, Credits } from "@/types/api";
 export function MovieClient({
   movieId,
   movie,
+  credits,
+  reviews,
+  keywords,
+  recommendations,
 }: {
   movieId: string;
-  movie: any;
+  movie: Movie;
+  credits: Credits;
+  reviews: any[];
+  keywords: any[];
+  recommendations: any[];
 }) {
   const router = useRouter();
 
   const { open, setOpen } = useHeaderContext();
   const [isFixed, setIsFixed] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [credits, setCredits] = useState<any>(null);
-  const [reviews, setReviews] = useState<any>(null);
-  const [keywords, setKeywords] = useState<any>(null);
-  const [recommendations, setRecommendations] = useState<any>(null);
-
   useEffect(() => {
     setIsFixed(window?.innerWidth > 500);
-
-    const fetchAdditionalData = async () => {
-      try {
-        const [creditsData, reviewsData, keywordsData, recommendationsData] =
-          await Promise.all([
-            fetchMovieCredits(movieId),
-            fetchMovieReviews(movieId),
-            fetchMovieKeywords(movieId),
-            fetchRecommendedMovies(movieId),
-          ]);
-
-        setCredits(creditsData);
-        setReviews(reviewsData);
-        setKeywords(keywordsData);
-        setRecommendations(recommendationsData);
-
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching additional data:", error);
-        setIsLoading(false);
-      }
-    };
-
-    fetchAdditionalData();
-  }, [movieId, movie]);
+  }, []);
 
   const backgroundAttachment = isFixed ? "fixed" : "scroll";
 
@@ -106,7 +77,7 @@ export function MovieClient({
             <div className="rounded-md w-1/2 lg:w-1/3 h-auto mx-auto">
               <Image
                 src={`https://image.tmdb.org/t/p/w400${movie?.poster_path}`}
-                alt={movie?.title || movie?.name || movie?.original_title}
+                alt={movie?.title || movie?.name || movie?.original_title || ""}
                 width={400}
                 height={600}
                 className="rounded-md w-full h-auto xl:ml-auto"
@@ -126,11 +97,11 @@ export function MovieClient({
                   </p>
                   <div className="flex flex-wrap">
                     {movie?.genres?.map(
-                      (genre: any, index: number, array) => {
+                      (genre: any, index: number, array: any[]) => {
                         const isLastItem = index === array.length - 1;
                         return (
                           <p key={genre.id} className="font-semibold">
-                            {genre?.name}
+                            {genre.name}
                             {!isLastItem && (
                               <span className="font-light px-2">|</span>
                             )}
@@ -160,9 +131,7 @@ export function MovieClient({
                           const isLastItem = index === array.length - 1;
                           return (
                             <button
-                              onClick={() =>
-                                router.push(`/person/${item.id}`)
-                              }
+                              onClick={() => router.push(`/person/${item.id}`)}
                               key={index}
                               className="whitespace-nowrap text-sm lg:text-base"
                             >
@@ -188,9 +157,7 @@ export function MovieClient({
                           const isLastItem = index === array.length - 1;
                           return (
                             <button
-                              onClick={() =>
-                                router.push(`/person/${item.id}`)
-                              }
+                              onClick={() => router.push(`/person/${item.id}`)}
                               key={index}
                               className="whitespace-nowrap text-sm lg:text-base"
                             >
@@ -216,9 +183,7 @@ export function MovieClient({
                           const isLastItem = index === array.length - 1;
                           return (
                             <button
-                              onClick={() =>
-                                router.push(`/person/${item.id}`)
-                              }
+                              onClick={() => router.push(`/person/${item.id}`)}
                               key={index}
                               className="whitespace-nowrap text-sm lg:text-base"
                             >
@@ -273,7 +238,7 @@ export function MovieClient({
                 })}
               </div>
             </div>
-            {reviews?.results?.length > 0 && (
+            {reviews?.length > 0 && (
               <div className="w-full mx-auto py-8">
                 <div className="flex gap-3 items-center mb-4">
                   <div className="w-1.5 h-7 bg-blue-400" />
@@ -281,14 +246,12 @@ export function MovieClient({
                     Social
                   </h2>
                   <button className="font-semibold mt-1.5 pb-1 border-b-4 border-slate-600">
-                    Reviews {reviews?.results?.length}
+                    Reviews {reviews?.length}
                   </button>
                 </div>
                 <div className="flex flex-col gap-1">
-                  {reviews?.results.map((review, index) => {
-                    return (
-                      <Review review={review} index={index} key={index} />
-                    );
+                  {reviews?.map((review: any, index: number) => {
+                    return <Review review={review} index={index} key={index} />;
                   })}
                 </div>
               </div>
@@ -301,7 +264,7 @@ export function MovieClient({
                 </h2>
               </div>
               <div className="flex overflow-x-scroll gap-5">
-                {recommendations?.results?.map((item: any, index: number) => {
+                {recommendations?.map((item: any, index: number) => {
                   return (
                     <Link
                       href={`/movie/${item.id}`}
@@ -324,7 +287,7 @@ export function MovieClient({
               </div>
               <div>
                 <label className="font-semibold">Original language</label>
-                <p>{movie?.spoken_languages[0]?.name}</p>
+                <p>{movie?.spoken_languages?.[0]?.name}</p>
               </div>
               {movie?.runtime && movie?.runtime > 0 && (
                 <div>
@@ -387,7 +350,7 @@ export function MovieClient({
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {keywords?.keywords?.map((item: any, index: number) => {
+                {keywords?.map((item: any, index: number) => {
                   return (
                     <button
                       key={index}

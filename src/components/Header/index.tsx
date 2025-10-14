@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState } from "react";
-import { SearchIcon } from "../Icons";
+import { FilmIcon, SearchIcon } from "../Icons";
 import { Search } from "../Search";
 import { createPortal } from "react-dom";
+import Link from "next/link";
+import { HomeIcon } from "../Icons";
 
 type HeaderProps = {
   open: boolean;
@@ -59,13 +61,19 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
     <header
       className={`${
         open ? "backdrop-blur-md" : "backdrop-blur-sm"
-      } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${headerStyles} flex transition-all pl-0 xl:pl-16 z-40`}
+      } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${headerStyles} flex transition-all z-40`}
     >
       <div className="flex flex-col justify-between items-center w-full relative px-4 py-[0.7rem]">
         <div className="w-full flex">
-          <div className="flex w-full lg:w-1/2 pr-4 lg:pr-0">
+          <div className="flex gap-2 w-full lg:w-1/2 pr-4 lg:pr-0">
+            <Link href="/" className="lg:hidden text-white p-2">
+              <HomeIcon />
+            </Link>
+            <Link href="/filter" className="lg:hidden text-white p-2">
+              <FilmIcon />
+            </Link>
             <button
-              className="text-white z-20 mr-6 py-2"
+              className="text-white z-20 mr-6 p-2"
               onClick={handleOpenSearch}
             >
               <SearchIcon />

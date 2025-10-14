@@ -3,40 +3,45 @@
 @tailwind utilities;
 
 @font-face {
-    font-family: 'Inter';
-    src: url('../assets/fonts/Inter/Inter-VariableFont_slnt\,wght.ttf') format('truetype');
-    font-weight: 100 900;
-    font-style: normal;
+  font-family: "Inter";
+  src: url("/fonts/Inter/Inter-VariableFont_slnt,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
 }
-  
+
 body {
-    overflow: overlay;
-    font-family: 'Inter', sans-serif;
-    background: #192231;
+  overflow: overlay;
+  font-family: "Inter", sans-serif;
+  background: #192231;
 }
 
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #192231;
+  background: #192231;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #283955;
-    border-radius: 999px;
+  background: #283955;
+  border-radius: 999px;
 }
 
 .image-loading {
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-    background: #777;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .image-loaded {
-    opacity: 1;
-  }
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  background: #777;
+  width: 100%;
+  height: 100%;
+}
+
+.image-loaded {
+  opacity: 1;
+}
+
+.page-transition {
+  opacity: 0;
+}

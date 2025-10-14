@@ -25,9 +25,10 @@ export const DoubleSlider: React.FC<{
     []
   );
 
-  const handleChange = (event: Event, newValue: number[]) => {
-    setSliderValue(newValue);
-    debouncedSetValue(newValue);
+  const handleChange = (event: Event, newValue: number | number[]) => {
+    const valueArray = Array.isArray(newValue) ? newValue : [newValue];
+    setSliderValue(valueArray);
+    debouncedSetValue(valueArray);
   };
 
   useEffect(() => {

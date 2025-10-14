@@ -1,5 +1,3 @@
-import withPlaiceholder from "@plaiceholder/next";
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -9,7 +7,6 @@ const nextConfig = {
     AUTH0_SECRET: process.env.AUTH0_SECRET,
     AUTH0_ISSUER: process.env.AUTH0_ISSUER,
     TMDB_API_KEY: process.env.TMDB_API_KEY,
-    NEXT_PUBLIC_TMDB_API_KEY: process.env.TMDB_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   },
   images: {
@@ -23,4 +20,4 @@ const nextConfig = {
   },
 };
 
-export default withPlaiceholder(nextConfig);
+export default nextConfig;

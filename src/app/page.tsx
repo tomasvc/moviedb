@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import { useEffect, useState, useRef } from "react";
-import { api, fetchMovieGenres, fetchMovieVideos } from "@/api";
+import { fetchMovieVideos } from "@/api";
 import { MovieItem } from "@/components/MovieItem";
 import { HomeMovieHero } from "@/components/HomeMovieHero";
 import { Header } from "@/components/Header";
@@ -9,15 +9,20 @@ import { useHeaderContext } from "@/contexts/headerContext";
 import { SideMenu } from "@/components/SideMenu";
 import { Video } from "@/components/Video";
 import { HomeHero } from "@/components/HomeHero";
-import useSWRInfinite from "swr/infinite";
-import axios from "axios";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
 import { XIcon } from "@/components/Icons";
+import {
+  fetchPopularMovies,
+  fetchTrendingMovies,
+  fetchUpcomingMovies,
+  fetchMovieGenres,
+} from "@/api";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { Movie } from "@/types/api";
 
 type stateProps = {
   movies: any[];
-  genres: any[];
   videos: { id: number | null; results: any[] };
   selectedMovieIndex: number | null;
   rowLength: number;
@@ -26,15 +31,9 @@ type stateProps = {
   loadedPages: number;
 };
 
-const fetcher = async (url: string) => {
-  const response = await axios.get(url);
-  return response.data;
-};
-
 export default function Home() {
   const [state, setState] = useState<stateProps>({
     movies: [],
-    genres: [],
     videos: { id: null, results: [] },
     selectedMovieIndex: null,
     rowLength: 6,
@@ -57,6 +56,13 @@ export default function Home() {
       },
     ],
   });
+  const { data: genresData } = useQuery({
+    queryKey: ["genres", "movie"],
+    queryFn: fetchMovieGenres,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+
+  const genres = genresData?.genres || [];
 
   const handleMovieClick = async (index: number) => {
     setState((prevState) => ({ ...prevState, selectedMovieIndex: index }));
@@ -80,7 +86,7 @@ export default function Home() {
         }));
 
         const filteredVideos = videos.results?.filter(
-          (v) => v.type === "Trailer"
+          (v: any) => v.type === "Trailer"
         );
         if (filteredVideos.length > 0) {
           setVideoJsOptions({
@@ -99,53 +105,38 @@ export default function Home() {
     }
   };
 
-  const handlePlayerReady = (player) => {
+  const handlePlayerReady = (player: any) => {
     playerRef.current = player;
 
     player.on("waiting", () => {});
     player.on("dispose", () => {});
   };
 
-  const BASE_URL = "https://api.themoviedb.org/3";
-  const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  const { data, fetchNextPage, isFetchingNextPage, error } = useInfiniteQuery({
+    queryKey: ["movies", state.selectedList.toLowerCase()],
+    queryFn: ({ pageParam = 1 }) => {
+      switch (state.selectedList) {
+        case "Popular":
+          return fetchPopularMovies(pageParam);
+        case "Trending":
+          return fetchTrendingMovies(pageParam);
+        case "Upcoming":
+          return fetchUpcomingMovies(pageParam);
+        default:
+          return fetchTrendingMovies(pageParam);
+      }
+    },
+    getNextPageParam: (lastPage: any) => {
+      if (lastPage.page < lastPage.total_pages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
 
-  const { data, isValidating, error, size, setSize } = useSWRInfinite(
-    (index) =>
-      `${BASE_URL}${
-        state.selectedList === "Popular"
-          ? api.popularMovies
-          : state.selectedList === "Trending"
-          ? api.trendingMovies
-          : api.upcomingMovies
-      }&page=${index + 1}&api_key=${API_KEY}`,
-    fetcher
-  );
-
-  const movies = data
-    ? data.flatMap((page) =>
-        page.results.filter(
-          (movie: any) =>
-            !data
-              .slice(0, data.indexOf(page))
-              .flatMap((p) => p.results)
-              .some((m) => m.id === movie.id)
-        )
-      )
-    : [];
-
+  const movies = data?.pages.flatMap((page: any) => page.results) || [];
   const moviesRef = useRef(movies);
-
-  useEffect(() => {
-    async function fetchData() {
-      const movieGenres = await fetchMovieGenres();
-      setState((prevState) => ({
-        ...prevState,
-        genres: movieGenres.genres,
-      }));
-    }
-
-    fetchData();
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -176,11 +167,11 @@ export default function Home() {
     return () => {
       window.removeEventListener("resize", setRowBasedOnWidth, false);
     };
-  }, [size]);
+  }, []);
 
   useEffect(() => {
     if (state.selectedMovieIndex !== undefined) {
-      const movieId = movies[state.selectedMovieIndex!]?.id;
+      const movieId = movies[state.selectedMovieIndex! as number]?.id;
       const selectedMovieElement = document.querySelector(`#movie-${movieId}`);
       const selectedHeroElement = document.querySelector(`#hero-${movieId}`);
 
@@ -227,7 +218,7 @@ export default function Home() {
         <div className="flex justify-start w-full min-[430px]:w-fit mx-auto">
           {movies
             .slice(rowIndex * state.rowLength, (rowIndex + 1) * state.rowLength)
-            .map((movie, index) => (
+            .map((movie: Movie, index: number) => (
               <div
                 key={movie.id}
                 className="w-1/2 lg:w-auto cursor-pointer flex"
@@ -241,12 +232,12 @@ export default function Home() {
               >
                 <div
                   className={`p-4 w-full h-full cursor-pointer ${
-                    movies[state.selectedMovieIndex!]?.id === movie.id
+                    movies[state.selectedMovieIndex! as number]?.id === movie.id
                       ? "bg-gray-900 border-b-4 border-slate-200 rounded-tl rounded-tr transition ease-in"
                       : "hover:bg-slate-800 rounded transition ease-out duration-300"
                   }`}
                 >
-                  <MovieItem movie={movie} genres={state.genres} />
+                  <MovieItem movie={movie} genres={genres} />
                 </div>
               </div>
             ))}
@@ -256,11 +247,12 @@ export default function Home() {
           Math.floor(state.selectedMovieIndex / state.rowLength) ===
             rowIndex && (
             <HomeMovieHero
-              movie={movies[state.selectedMovieIndex!]}
-              genres={state.genres}
+              movie={movies[state.selectedMovieIndex! as number]}
+              genres={genres}
               setState={setState}
               videoAvailable={
-                state.videos.id === movies[state.selectedMovieIndex!].id
+                state.videos.id ===
+                movies[state.selectedMovieIndex! as number].id
               }
             />
           )}
@@ -283,11 +275,11 @@ export default function Home() {
               {data && (
                 <div className="flex justify-center mx-auto pt-10">
                   <button
-                    onClick={() => setSize(size + 1)}
-                    disabled={isValidating}
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
                     className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-[#6a49ff]/40 disabled:text-white/80 text-white text-xs font-medium px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
                   >
-                    {isValidating ? "Loading..." : "Show more"}
+                    {isFetchingNextPage ? "Loading..." : "Show more"}
                   </button>
                 </div>
               )}

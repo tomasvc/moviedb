@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { fetchMovieGenres } from "../../api";
-import { CheckIcon, CircleMenuHorizontal } from "../Icons";
+import { CheckIcon } from "../Icons";
 import { Dropdown } from "../Dropdown";
 import { SingleSlider } from "../SingleSlider";
 import { DoubleSlider } from "../DoubleSlider";
-
-interface GenreType {
-  id: number;
-  name: string;
-  selected: boolean;
-}
+import { Genre } from "@/types/api";
 
 interface ReleaseYearRange {
   from: number;
   to: number;
+}
+
+interface ReleaseYearExact {
+  type: string;
+  value: number;
 }
 
 export const FilterMenu: React.FC<{
@@ -21,17 +21,20 @@ export const FilterMenu: React.FC<{
   country: string;
   setGenres: (genres: any) => any;
   setCountry: (country: string) => any;
-  setReleaseYear: (releaseYear: number | ReleaseYearRange) => any;
-}> = ({ genres, country, setGenres, setCountry, setReleaseYear }) => {
-  const [selectedYearSlider, setSelectedYearSlider] = useState("Range");
+  setReleaseYear: (
+    releaseYear: number | ReleaseYearRange | ReleaseYearExact
+  ) => any;
+  onClose?: () => void;
+}> = ({ genres, country, setGenres, setCountry, setReleaseYear, onClose }) => {
+  const [selectedYearSlider, setSelectedYearSlider] = useState("Exact");
 
   useEffect(() => {
     async function fetchData() {
       const movieGenres = await fetchMovieGenres();
 
       if (movieGenres) {
-        let newArr: GenreType[] = [];
-        movieGenres.genres.map((item) => {
+        let newArr: Genre[] = [];
+        movieGenres.genres.map((item: Genre) => {
           newArr.push({ name: item.name, id: item.id, selected: false });
         });
         setGenres(newArr);
@@ -41,8 +44,10 @@ export const FilterMenu: React.FC<{
     fetchData();
   }, []);
   const clearFilters = () => {
-    setCountry("");
-    const newArr = genres.map((item) => {
+    setCountry("United States");
+    setSelectedYearSlider("Exact");
+    setReleaseYear({ type: "exact", value: new Date().getFullYear() });
+    const newArr = genres.map((item: Genre) => {
       if (item.selected) {
         return { ...item, selected: false };
       } else return item;
@@ -52,7 +57,7 @@ export const FilterMenu: React.FC<{
   };
 
   const handleSelect = (id: number) => {
-    const newArr = genres.map((item) => {
+    const newArr = genres.map((item: Genre) => {
       if (item.id === id) {
         return { ...item, selected: !item.selected };
       } else return item;
@@ -61,23 +66,40 @@ export const FilterMenu: React.FC<{
   };
 
   return (
-    <div className="fixed top-[3.75rem] left-[3.75rem] w-56 h-full bg-[#232C3B] text-white pt-3.5 pb-5 !shadow-lg !shadow-black/50 z-20 animate-fadeLeft duration-300 ease-out">
-      <div className="flex flex-col h-full">
+    <div className="fixed top-0 lg:top-[3.75rem] left-0 lg:left-[3.75rem] w-full lg:w-56 h-full lg:h-[calc(100vh-3.75rem)] bg-[#232C3B] text-white pt-16 lg:pt-3.5 pb-5 !shadow-lg !shadow-black/50 z-20 animate-fadeLeft duration-300 ease-out overflow-y-auto">
+      <div className="flex flex-col min-h-full">
         <div className="flex justify-between items-center pl-5 pr-3 mb-4">
           <h3 className="uppercase text-xl font-medium tracking-wider">
             Movies
           </h3>
-          <button className="hover:bg-slate-50/5 px-1 py-3 mb-1 rounded-full transition">
-            <CircleMenuHorizontal />
-          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden text-white hover:text-gray-300 p-1"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
         </div>
-        <div className="flex flex-col h-full overflow-y-auto mt-4 pb-10">
+        <div className="flex flex-col flex-1 mt-4 pb-10 px-2 lg:px-0">
           <label className="text-gray-100 tracking-wide uppercase text-xs px-5 pb-1">
             Genres
           </label>
           <ul className="border-t border-t-gray-600 pt-4 pb-8">
             {genres &&
-              genres.map((item: GenreType) => {
+              genres.map((item: Genre) => {
                 return (
                   <li
                     key={item.id}
@@ -94,33 +116,6 @@ export const FilterMenu: React.FC<{
                 );
               })}
           </ul>
-
-          {/* <div>
-            <label
-              htmlFor="ratings"
-              className="text-gray-100 tracking-wide uppercase text-xs px-5"
-            >
-              Rating
-            </label>
-            <div className="px-5 flex flex-col border-t border-t-gray-600 pt-4 pb-6">
-              <DoubleSlider
-                ariaLabel="Vote average"
-                label={"Vote average"}
-                minValue={0}
-                maxValue={10}
-                defaultValue={[0, 10]}
-                setValue={setVoteAverage}
-              />
-              <DoubleSlider
-                ariaLabel="Vote count"
-                label={"Vote count"}
-                minValue={0}
-                maxValue={5000}
-                defaultValue={[0, 5000]}
-                setValue={setVoteCount}
-              />
-            </div>
-          </div> */}
 
           <div>
             <label
@@ -189,12 +184,12 @@ export const FilterMenu: React.FC<{
             </div>
           </div>
 
-          <div className="flex mt-auto mx-4 pb-4">
+          <div className="flex mt-auto mx-2 lg:mx-4 pb-4">
             <button
               onClick={() => clearFilters()}
               className="bg-[#5937ef] hover:bg-[#633fff] active:bg-[#4d30cb] transition active:transition-none text-white text-xs px-4 py-2.5 w-full h-fit rounded-full uppercase"
             >
-              Clear filters
+              Reset to defaults
             </button>
           </div>
         </div>

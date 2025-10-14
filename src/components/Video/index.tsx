@@ -11,9 +11,7 @@ export const Video = (props: any) => {
   const data = `{"techOrder": ["youtube"], "sources": [{ "type": "video/youtube", "src": "${options.src}" }], "youtube": { "iv_load_policy": 1 }}`;
 
   useEffect(() => {
-    // Make sure Video.js player is only initialized once
     if (!playerRef.current) {
-      // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
       const videoElement = document.createElement("video-js");
       if (videoRef.current) {
         videoElement.classList.add("vjs-big-play-centered");
@@ -28,9 +26,6 @@ export const Video = (props: any) => {
           onReady && onReady(player);
         }
       ));
-
-      // You could update an existing player in the `else` block here
-      // on prop change, for example:
     } else {
       const player = playerRef.current as any;
 
@@ -39,7 +34,6 @@ export const Video = (props: any) => {
     }
   }, [options, videoRef]);
 
-  // Dispose the Video.js player when the functional component unmounts
   useEffect(() => {
     return () => {
       const player = playerRef.current as any;
