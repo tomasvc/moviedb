@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { fetchDiscover } from "@/api/fetchDiscover";
 import { SideMenu } from "@/components/SideMenu";
@@ -16,6 +16,22 @@ export default function Filter() {
   const { open, setOpen } = useHeaderContext();
   const [genres, setGenres] = useState<Genre[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setShowFilters(window.innerWidth >= 1024);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const [releaseYear, setReleaseYear] = useState<any>({
     type: "exact",
@@ -44,7 +60,7 @@ export default function Filter() {
     queryKey: ["discover", genres, country, releaseYear, page],
     queryFn: () =>
       fetchDiscover(
-        genres.map((genre: Genre) => ({ ...genre, selected: false })),
+        genres,
         country ? countryCodes[country as keyof typeof countryCodes] : "",
         releaseYear,
         page
@@ -70,6 +86,30 @@ export default function Filter() {
     setPage(value);
   };
 
+  const handleCloseFilters = useCallback(() => {
+    if (isAnimatingOut) return;
+
+    setIsAnimatingOut(true);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setShowFilters(false);
+      setIsAnimatingOut(false);
+      timeoutRef.current = null;
+    }, 200);
+  }, [isAnimatingOut]);
+
+  const handleToggleFilters = useCallback(() => {
+    if (showFilters && !isAnimatingOut) {
+      handleCloseFilters();
+    } else if (!showFilters && !isAnimatingOut) {
+      setShowFilters(true);
+    }
+  }, [showFilters, isAnimatingOut, handleCloseFilters]);
+
   return (
     <div className="bg-[#192231] font-roboto overflow-x-hidden">
       <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
@@ -77,31 +117,36 @@ export default function Filter() {
         <div className="w-full lg:ml-16">
           <Header open={open} setOpen={setOpen} />
           <div className="w-full pt-16 lg:pt-20">
-            <div className={`${showFilters ? "block" : "hidden"} lg:block`}>
+            <div className={showFilters || isAnimatingOut ? "block" : "hidden"}>
               <FilterMenu
                 genres={genres}
                 setGenres={setGenres}
                 setReleaseYear={setReleaseYear}
                 country={country}
                 setCountry={setCountry}
-                onClose={() => setShowFilters(false)}
+                onClose={handleCloseFilters}
+                isAnimatingOut={isAnimatingOut}
               />
             </div>
-            {showFilters && (
-              <div
-                className="fixed inset-0 bg-black/50 z-10 lg:hidden"
-                onClick={() => setShowFilters(false)}
-              />
-            )}
-            <div className="px-4 lg:px-6 xl:px-10 pb-10 max-w-7xl mx-auto lg:ml-auto">
+            <div
+              className={`fixed inset-0 bg-black/50 z-10 transition-opacity duration-200 ${
+                showFilters || isAnimatingOut
+                  ? isAnimatingOut
+                    ? "opacity-0"
+                    : "opacity-100"
+                  : "hidden"
+              }`}
+              onClick={handleCloseFilters}
+            />
+            <div className="px-4 lg:px-6 xl:px-10 pb-10 max-w-7xl mx-auto lg:mx-auto xl:!ml-auto">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <div className="flex items-center gap-4">
                   <h1 className="text-white text-xl sm:text-2xl font-bold">
                     Filter Results
                   </h1>
                   <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm transition flex items-center gap-2"
+                    onClick={handleToggleFilters}
+                    className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-sm transition flex items-center gap-2"
                   >
                     <svg
                       className="w-4 h-4"

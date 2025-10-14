@@ -135,7 +135,12 @@ export default function Home() {
     initialPageParam: 1,
   });
 
-  const movies = data?.pages.flatMap((page: any) => page.results) || [];
+  // Deduplicate movies by ID to prevent duplicates from API
+  const allMovies = data?.pages.flatMap((page: any) => page.results) || [];
+  const movies = allMovies.filter(
+    (movie: Movie, index: number, self: Movie[]) =>
+      index === self.findIndex((m: Movie) => m.id === movie.id)
+  );
   const moviesRef = useRef(movies);
 
   useEffect(() => {
@@ -214,13 +219,13 @@ export default function Home() {
   const rows = Array.from(
     { length: Math.ceil(movies.length / state.rowLength) },
     (_, rowIndex) => (
-      <div key={`${rowIndex}-${state.rowLength}`}>
+      <div key={`row-${rowIndex}-${state.rowLength}-${state.selectedList}`}>
         <div className="flex justify-start w-full min-[430px]:w-fit mx-auto">
           {movies
             .slice(rowIndex * state.rowLength, (rowIndex + 1) * state.rowLength)
             .map((movie: Movie, index: number) => (
               <div
-                key={movie.id}
+                key={`${movie.id}-${rowIndex}-${index}`}
                 className="w-1/2 lg:w-auto cursor-pointer flex"
                 onClick={() => {
                   setState((prevState) => ({

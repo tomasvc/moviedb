@@ -63,17 +63,25 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
         open ? "backdrop-blur-md" : "backdrop-blur-sm"
       } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${headerStyles} flex transition-all z-40`}
     >
-      <div className="flex flex-col justify-between items-center w-full relative px-4 py-[0.7rem]">
-        <div className="w-full flex">
-          <div className="flex gap-2 w-full lg:w-1/2 pr-4 lg:pr-0">
-            <Link href="/" className="lg:hidden text-white p-2">
+      <div className="flex flex-col justify-between items-center w-full relative px-1 lg:px-0">
+        <div className="w-full flex justify-between items-center p-2 lg:p-0">
+          <div className="flex gap-2 lg:hidden">
+            <Link
+              href="/"
+              className="text-white p-3 rounded-lg hover:bg-indigo-500/20 transition"
+            >
               <HomeIcon />
             </Link>
-            <Link href="/filter" className="lg:hidden text-white p-2">
+            <Link
+              href="/filter"
+              className="text-white p-3 rounded-lg hover:bg-indigo-500/20 transition"
+            >
               <FilmIcon />
             </Link>
+          </div>
+          <div className="flex gap-2 ml-auto">
             <button
-              className="text-white z-20 mr-6 p-2"
+              className="p-3 lg:p-5 text-white hover:bg-indigo-500/20 lg:hover:bg-[#5937ef]/20 rounded-lg lg:rounded-none transition"
               onClick={handleOpenSearch}
             >
               <SearchIcon />

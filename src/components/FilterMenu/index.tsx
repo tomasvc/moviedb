@@ -25,7 +25,16 @@ export const FilterMenu: React.FC<{
     releaseYear: number | ReleaseYearRange | ReleaseYearExact
   ) => any;
   onClose?: () => void;
-}> = ({ genres, country, setGenres, setCountry, setReleaseYear, onClose }) => {
+  isAnimatingOut?: boolean;
+}> = ({
+  genres,
+  country,
+  setGenres,
+  setCountry,
+  setReleaseYear,
+  onClose,
+  isAnimatingOut,
+}) => {
   const [selectedYearSlider, setSelectedYearSlider] = useState("Exact");
 
   useEffect(() => {
@@ -66,7 +75,11 @@ export const FilterMenu: React.FC<{
   };
 
   return (
-    <div className="fixed top-0 lg:top-[3.75rem] left-0 lg:left-[3.75rem] w-full lg:w-56 h-full lg:h-[calc(100vh-3.75rem)] bg-[#232C3B] text-white pt-16 lg:pt-3.5 pb-5 !shadow-lg !shadow-black/50 z-20 animate-fadeLeft duration-300 ease-out overflow-y-auto">
+    <div
+      className={`fixed top-0 lg:top-[3.75rem] left-0 lg:left-[3.75rem] w-full lg:w-72 h-full lg:h-[calc(100vh-3.75rem)] bg-[#232C3B] text-white pt-16 lg:pt-3.5 pb-5 !shadow-lg !shadow-black/50 z-20 overflow-y-auto ${
+        isAnimatingOut ? "animate-fadeOutLeft" : "animate-fadeLeft"
+      }`}
+    >
       <div className="flex flex-col min-h-full">
         <div className="flex justify-between items-center pl-5 pr-3 mb-4">
           <h3 className="uppercase text-xl font-medium tracking-wider">
@@ -75,7 +88,7 @@ export const FilterMenu: React.FC<{
           {onClose && (
             <button
               onClick={onClose}
-              className="lg:hidden text-white hover:text-gray-300 p-1"
+              className="text-white hover:text-gray-300 p-1"
             >
               <svg
                 className="w-6 h-6"
