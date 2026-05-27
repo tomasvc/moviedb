@@ -101,10 +101,8 @@ export type VibeRecommendation = {
 
 export type SearchGPTResponse = {
   mode: "regular" | "vibe";
-  // regular mode
-  titles?: string[];
-  people?: string[];
-  // vibe mode
-  filters?: VibeFilters;
-  recommendations?: VibeRecommendation[];
+  titles: string[];
+  people: string[];
+  filters: VibeFilters;
+  recommendations: VibeRecommendation[];
 };
