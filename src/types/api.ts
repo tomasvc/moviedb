@@ -16,6 +16,8 @@ export interface Movie {
   genres?: Genre[];
   production_companies?: { id: number; name: string; logo_path?: string }[];
   spoken_languages?: { name: string }[];
+  vote_average?: number;
+  vote_count?: number;
 }
 
 export interface Person {
@@ -57,6 +59,23 @@ export interface MovieVideosResponse {
   results: { id: string; key: string; type: string; site: string }[];
 }
 
+export interface MovieImage {
+  aspect_ratio: number;
+  height: number;
+  iso_639_1: string | null;
+  file_path: string;
+  vote_average: number;
+  vote_count: number;
+  width: number;
+}
+
+export interface MovieImagesResponse {
+  id?: number;
+  backdrops: MovieImage[];
+  logos: MovieImage[];
+  posters: MovieImage[];
+}
+
 export type ApiData = Record<string, any>;
 export type SearchResult = {
   id: number;
@@ -66,4 +85,26 @@ export type SearchResult = {
   profile_path?: string;
   gender?: number;
   release_date?: string;
+};
+
+export type VibeFilters = {
+  mood?: string[];
+  max_runtime?: number;
+  exclude_genres?: string[];
+  include_genres?: string[];
+};
+
+export type VibeRecommendation = {
+  title: string;
+  blurb: string;
+};
+
+export type SearchGPTResponse = {
+  mode: "regular" | "vibe";
+  // regular mode
+  titles?: string[];
+  people?: string[];
+  // vibe mode
+  filters?: VibeFilters;
+  recommendations?: VibeRecommendation[];
 };
