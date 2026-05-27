@@ -30,7 +30,7 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.562.0",
     "moment": "^2.29.4",
-    "next": "^15.5.2",
+    "next": "^16.2.6",
     "next-auth": "^4.22.1",
     "nextjs-progressbar": "^0.0.16",
     "openai": "^6.3.0",
