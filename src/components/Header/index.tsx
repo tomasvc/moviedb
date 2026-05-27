@@ -6,6 +6,7 @@ import { Search } from "../Search";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import Logo from "@/assets/img/logo.svg";
 
 type HeaderProps = {
@@ -23,6 +24,7 @@ export const Header = ({
 }: HeaderProps) => {
   const [showSearch, setShowSearch] = useState(false);
   const [headerStyles, setHeaderStyles] = useState("");
+  const pathname = usePathname();
 
   useEffect(() => {
     setOpen(false);
@@ -68,7 +70,7 @@ export const Header = ({
   return (
     <header
       className={`fixed w-full border-b border-slate-600/30 ${
-        location.pathname === "/" ? "bg-slate-900" : "bg-transparent"
+        pathname === "/" ? "bg-slate-900" : "bg-transparent"
       } ${headerStyles} flex transition-all z-40`}
     >
       <div className="flex flex-col justify-between items-center w-full relative px-6 py-4">
