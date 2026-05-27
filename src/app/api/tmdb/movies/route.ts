@@ -4,6 +4,7 @@ import {
     fetchPopularMovies,
     fetchTrendingMovies,
     fetchUpcomingMovies,
+    fetchMovieVideos,
 } from "@/api/movies";
 import { NextResponse } from "next/server";
 import { FetchError } from "@/api/client";
@@ -29,6 +30,11 @@ export async function GET(request: Request) {
                     return NextResponse.json({ error: "Missing id" }, { status: 400 });
                 }
                 return NextResponse.json(await fetchMovieDetails(id));
+            case "movie-videos":
+                if (!id) {
+                    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+                }
+                return NextResponse.json(await fetchMovieVideos(id));
             case "movie-genres":
                 return NextResponse.json(await fetchMovieGenres());
             default:

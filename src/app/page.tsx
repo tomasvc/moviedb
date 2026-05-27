@@ -82,26 +82,35 @@ export default function Home() {
       const videos = await fetch(
         "/api/tmdb/movies?type=movie-videos&id=" + movieId,
       ).then((res) => res.json());
-      if (videos) {
-        setState((prevState) => ({
-          ...prevState,
-          videos: { id: movieId, results: videos.results },
-        }));
 
-        const filteredVideos = videos.results?.filter(
-          (v: any) => v.type === "Trailer",
-        );
-        if (filteredVideos.length > 0) {
-          setVideoJsOptions({
-            ...videoJsOptions,
-            sources: [
-              {
-                src: `https://youtube.com/watch?v=${filteredVideos[0].key}`,
-                type: "video/youtube",
-              },
-            ],
-          });
-        }
+      // TMDB `/movie/{id}/videos` returns an object with `results` array.
+      // We only select YouTube trailers since the player is configured for YouTube tech.
+      const results = Array.isArray(videos?.results) ? videos.results : [];
+      setState((prevState) => ({
+        ...prevState,
+        videos: { id: movieId, results },
+      }));
+
+      const youtubeTrailers = results.filter((v: any) => {
+        const site = typeof v?.site === "string" ? v.site.toLowerCase() : "";
+        return v?.type === "Trailer" && site === "youtube";
+      });
+
+      const chosen = youtubeTrailers[0] ?? results.find((v: any) => {
+        const site = typeof v?.site === "string" ? v.site.toLowerCase() : "";
+        return site === "youtube";
+      });
+
+      if (chosen?.key) {
+        setVideoJsOptions((prev) => ({
+          ...prev,
+          sources: [
+            {
+              src: `https://www.youtube.com/watch?v=${chosen.key}`,
+              type: "video/youtube",
+            },
+          ],
+        }));
       }
     } catch (error) {
       console.error("Failed to fetch videos for movie", movieId, error);

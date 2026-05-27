@@ -56,7 +56,18 @@ export interface MovieKeywordsResponse {
 }
 
 export interface MovieVideosResponse {
-  results: { id: string; key: string; type: string; site: string }[];
+  results: {
+    id: string;
+    key: string;
+    type: string;
+    site: string;
+    name?: string;
+    size?: number;
+    official?: boolean;
+    published_at?: string;
+    iso_639_1?: string;
+    iso_3166_1?: string;
+  }[];
 }
 
 export interface MovieImage {
