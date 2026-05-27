@@ -1,4 +1,4 @@
-import { FetchError } from "@/api";
+import { FetchError } from "@/api/client";
 import {
   QueryClient,
   QueryCache,
