@@ -89,7 +89,7 @@ export type SearchResult = {
 
 export type VibeFilters = {
   mood?: string[];
-  max_runtime?: number;
+  max_runtime?: number | null;
   exclude_genres?: string[];
   include_genres?: string[];
 };
