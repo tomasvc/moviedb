@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchMovieGenres } from "../../api";
+import { fetchMovieGenres } from "@/api/movies";
 import { CheckIcon } from "../Icons";
 import { Dropdown } from "../Dropdown";
 import { SingleSlider } from "../SingleSlider";
@@ -22,7 +22,7 @@ export const FilterMenu: React.FC<{
   setGenres: (genres: any) => any;
   setCountry: (country: string) => any;
   setReleaseYear: (
-    releaseYear: number | ReleaseYearRange | ReleaseYearExact
+    releaseYear: number | ReleaseYearRange | ReleaseYearExact,
   ) => any;
   onClose?: () => void;
   isAnimatingOut?: boolean;
