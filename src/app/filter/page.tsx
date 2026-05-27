@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { fetchDiscover } from "@/api/fetchDiscover";
-import { SideMenu } from "@/components/SideMenu";
 import { FilterMenu } from "@/components/FilterMenu";
 import { Header } from "@/components/Header";
 import { useHeaderContext } from "@/contexts/headerContext";
@@ -56,6 +55,7 @@ export default function Filter() {
     data: results,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["discover", genres, country, releaseYear, page],
     queryFn: () =>
@@ -113,7 +113,6 @@ export default function Filter() {
   return (
     <div className="bg-[#192231] font-roboto overflow-x-hidden">
       <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
-        <SideMenu selected="filter" />
         <div className="w-full lg:ml-16">
           <Header open={open} setOpen={setOpen} />
           <div className="w-full pt-16 lg:pt-20">
@@ -193,7 +192,9 @@ export default function Filter() {
                       Error: {error.message}
                     </p>
                     <button
-                      onClick={() => window.location.reload()}
+                      onClick={() => {
+                        refetch();
+                      }}
                       className="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md text-sm transition"
                     >
                       Try Again

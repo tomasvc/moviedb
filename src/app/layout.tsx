@@ -1,6 +1,9 @@
 import "../styles/globals.css";
 import { ClientLayout } from "./ClientLayout";
 import { Metadata } from "next";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Movies",
@@ -17,10 +20,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning>
-        <ClientLayout>
-          {children}
-        </ClientLayout>
+      <body suppressHydrationWarning className={inter.className}>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

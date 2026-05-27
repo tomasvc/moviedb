@@ -1,11 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { SearchGPTResponse } from "@/types/api";
 
 const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
+
+const SEARCH_SCHEMA = {
+  name: "search_response",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      mode: { type: "string", enum: ["regular", "vibe"] },
+      titles: { type: "array", items: { type: "string" } },
+      people: { type: "array", items: { type: "string" } },
+      filters: {
+        type: "object",
+        properties: {
+          mood: { type: "array", items: { type: "string" } },
+          max_runtime: { anyOf: [{ type: "number" }, { type: "null" }] },
+          exclude_genres: { type: "array", items: { type: "string" } },
+          include_genres: { type: "array", items: { type: "string" } },
+        },
+        required: ["mood", "max_runtime", "exclude_genres", "include_genres"],
+        additionalProperties: false,
+      },
+      recommendations: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            blurb: { type: "string" },
+          },
+          required: ["title", "blurb"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["mode", "titles", "people", "filters", "recommendations"],
+    additionalProperties: false,
+  },
+} as const;
+
+const SYSTEM_PROMPT = `You are a movie search assistant. Given a user query, respond with structured JSON.
+
+Determine the mode:
+- "regular": the query names a specific movie title, person (actor/director/crew), or both. Extract the names as-is.
+- "vibe": the query describes a mood, feeling, genre preference, constraint, or scenario (e.g. "something cozy", "under 2 hours", "not horror", "after a breakup"). Extract filters and recommend up to 8 well-known movies.
+
+For "regular" mode:
+- Put movie titles in "titles" (up to 10, exact names)
+- Put people names in "people" (up to 5, full names)
+- Leave "filters" and "recommendations" empty (filters: {mood:[], max_runtime:null, exclude_genres:[], include_genres:[]}, recommendations:[])
+
+For "vibe" mode:
+- Leave "titles" and "people" as empty arrays
+- Populate "filters" with what you understood from the query
+- Populate "recommendations" with up to 8 real movies that fit the vibe, each with a one-sentence blurb (max 15 words) explaining why it fits. Be specific about runtime or mood in the blurb.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,13 +80,15 @@ export async function POST(request: NextRequest) {
     }
 
     const completion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: `Classify and structure the following query: '${query}'. Based on the query, return a list with these three sections if it is suitable for the query: movie titles, people (either cast, crew or both) and movie genres. Make sure the section labels end with a colon. Provide only the results without any additional text. Provide at least 10 items per list if you can. Try not not to include any innacurate information. Do not add any descriptions. If you cannot find anything based on the query, or if the provided query makes no sense, simply respond with 'Could not find any information with the provided query'.`,
-        },
-      ],
       model: "gpt-4.1-nano",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: query },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: SEARCH_SCHEMA,
+      },
     });
 
     const content = completion.choices[0]?.message?.content;
@@ -45,7 +100,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ content });
+    const parsed: SearchGPTResponse = JSON.parse(content);
+    return NextResponse.json(parsed);
   } catch (error: any) {
     console.error("OpenAI API error:", error);
 
@@ -55,14 +111,12 @@ export async function POST(request: NextRequest) {
         { status: 429 }
       );
     }
-
     if (error?.status === 401) {
       return NextResponse.json(
         { error: "Invalid API key configuration" },
-        { status: 500 }
+        { status: 401 }
       );
     }
-
     if (error?.status === 402) {
       return NextResponse.json(
         { error: "Insufficient credits. Please check your OpenAI account." },

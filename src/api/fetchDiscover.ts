@@ -1,4 +1,3 @@
-import { apiClient } from "@/api/index";
 import qs from "qs";
 
 export const fetchDiscover = async (
@@ -21,13 +20,13 @@ export const fetchDiscover = async (
   const releaseYearParams =
     releaseYear.type === "range" && releaseYear.from && releaseYear.to
       ? {
-          "primary_release_date.gte": `${releaseYear.from}-01-01`,
-          "primary_release_date.lte": `${releaseYear.to}-12-31`,
-        }
+        "primary_release_date.gte": `${releaseYear.from}-01-01`,
+        "primary_release_date.lte": `${releaseYear.to}-12-31`,
+      }
       : releaseYear.type === "exact" &&
         (releaseYear.releaseYear || releaseYear.value)
-      ? { year: releaseYear.releaseYear || releaseYear.value }
-      : {};
+        ? { year: releaseYear.releaseYear || releaseYear.value }
+        : {};
 
   const queryParams = {
     ...(selectedGenres && { with_genres: selectedGenres }),
@@ -36,11 +35,23 @@ export const fetchDiscover = async (
     ...releaseYearParams,
   };
 
-  const response = await apiClient.get("/discover/movie", {
-    params: queryParams,
-    paramsSerializer: (params) =>
-      qs.stringify(params, { arrayFormat: "comma" }),
+  const url = new URL("/discover/movie", "https://api.themoviedb.org/3");
+
+  const serializedParams = qs.stringify(queryParams, { arrayFormat: "comma" });
+  const additionalParams = new URLSearchParams(serializedParams);
+
+  url.searchParams.set("api_key", process.env.TMDB_API_KEY || "");
+  url.searchParams.set("language", "en-US");
+
+  additionalParams.forEach((value, key) => {
+    url.searchParams.set(key, value);
   });
 
-  return response.data;
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
 };

@@ -209,7 +209,7 @@ export const PlayIcon = () => {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
-      className="w-10 lg:w-20 h-10 lg:h-20 z-10"
+      className="w-4 h-4 lg:w-10 lg:h-10 z-10"
     >
       <path
         strokeLinecap="round"

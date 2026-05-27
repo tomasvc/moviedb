@@ -13,7 +13,7 @@ export const MovieItem = ({
   return (
     <div
       id={`movie-${movie.id}`}
-      className="relative flex flex-col rounded-sm cursor-pointer text-white animate-fadeUp"
+      className="relative flex flex-col rounded-sm cursor-pointer text-white animate-fadeUp rounded-md"
     >
       {movie.poster_path ? (
         <Image

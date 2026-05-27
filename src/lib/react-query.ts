@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import { FetchError } from "@/api/client";
 import {
   QueryClient,
   QueryCache,
@@ -39,6 +39,6 @@ export type QueryConfig<QueryFnType extends (...args: any) => any> = Omit<
 export type MutationConfig<MutationFnType extends (...args: any) => any> =
   UseMutationOptions<
     ExtractFnReturnType<MutationFnType>,
-    AxiosError,
+    FetchError,
     Parameters<MutationFnType>[0]
   >;

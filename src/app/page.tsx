@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { fetchMovieVideos } from "@/api";
-import { MovieItem } from "@/components/MovieItem";
+// import { MovieItem } from "@/components/MovieItem";
+import { MovieItem } from "@components/MovieItemNew";
 import { HomeMovieHero } from "@/components/HomeMovieHero";
 import { Header } from "@/components/Header";
 import { useHeaderContext } from "@/contexts/headerContext";
@@ -12,12 +12,13 @@ import { HomeHero } from "@/components/HomeHero";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
 import { XIcon } from "@/components/Icons";
-import {
-  fetchPopularMovies,
-  fetchTrendingMovies,
-  fetchUpcomingMovies,
-  fetchMovieGenres,
-} from "@/api";
+// import {
+//   fetchPopularMovies,
+//   fetchTrendingMovies,
+//   fetchUpcomingMovies,
+//   fetchMovieGenres,
+//   fetchMovieVideos,
+// } from "@/api/movies";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Movie } from "@/types/api";
 
@@ -58,10 +59,10 @@ export default function Home() {
   });
   const { data: genresData } = useQuery({
     queryKey: ["genres", "movie"],
-    queryFn: fetchMovieGenres,
+    queryFn: () =>
+      fetch("/api/tmdb/movies?type=movie-genres").then((res) => res.json()),
     staleTime: 1000 * 60 * 60 * 24,
   });
-
   const genres = genresData?.genres || [];
 
   const handleMovieClick = async (index: number) => {
@@ -78,7 +79,9 @@ export default function Home() {
     }
 
     try {
-      const videos = await fetchMovieVideos(movieId);
+      const videos = await fetch(
+        "/api/tmdb/movies?type=movie-videos&id=" + movieId,
+      ).then((res) => res.json());
       if (videos) {
         setState((prevState) => ({
           ...prevState,
@@ -86,7 +89,7 @@ export default function Home() {
         }));
 
         const filteredVideos = videos.results?.filter(
-          (v: any) => v.type === "Trailer"
+          (v: any) => v.type === "Trailer",
         );
         if (filteredVideos.length > 0) {
           setVideoJsOptions({
@@ -117,13 +120,21 @@ export default function Home() {
     queryFn: ({ pageParam = 1 }) => {
       switch (state.selectedList) {
         case "Popular":
-          return fetchPopularMovies(pageParam);
+          return fetch("/api/tmdb/movies?type=popular&page=" + pageParam).then(
+            (res) => res.json(),
+          );
         case "Trending":
-          return fetchTrendingMovies(pageParam);
+          return fetch("/api/tmdb/movies?type=trending&page=" + pageParam).then(
+            (res) => res.json(),
+          );
         case "Upcoming":
-          return fetchUpcomingMovies(pageParam);
+          return fetch("/api/tmdb/movies?type=upcoming&page=" + pageParam).then(
+            (res) => res.json(),
+          );
         default:
-          return fetchTrendingMovies(pageParam);
+          return fetch("/api/tmdb/movies?type=trending&page=" + pageParam).then(
+            (res) => res.json(),
+          );
       }
     },
     getNextPageParam: (lastPage: any) => {
@@ -139,7 +150,7 @@ export default function Home() {
   const allMovies = data?.pages.flatMap((page: any) => page.results) || [];
   const movies = allMovies.filter(
     (movie: Movie, index: number, self: Movie[]) =>
-      index === self.findIndex((m: Movie) => m.id === movie.id)
+      index === self.findIndex((m: Movie) => m?.id === movie?.id),
   );
   const moviesRef = useRef(movies);
 
@@ -152,16 +163,16 @@ export default function Home() {
         width > 2400
           ? 10
           : width > 2000
-          ? 7
-          : width > 1700
-          ? 6
-          : width > 1500
-          ? 5
-          : width > 850
-          ? 4
-          : width > 650
-          ? 3
-          : 2;
+            ? 6
+            : width > 1700
+              ? 6
+              : width > 1500
+                ? 6
+                : width > 850
+                  ? 4
+                  : width > 650
+                    ? 2
+                    : 2;
 
       setState((prevState) => ({ ...prevState, rowLength }));
     };
@@ -220,13 +231,18 @@ export default function Home() {
     { length: Math.ceil(movies.length / state.rowLength) },
     (_, rowIndex) => (
       <div key={`row-${rowIndex}-${state.rowLength}-${state.selectedList}`}>
-        <div className="flex justify-start w-full min-[430px]:w-fit mx-auto">
+        <div
+          className="grid w-full gap-x-2"
+          style={{
+            gridTemplateColumns: `repeat(${state.rowLength}, minmax(0, 1fr))`,
+          }}
+        >
           {movies
             .slice(rowIndex * state.rowLength, (rowIndex + 1) * state.rowLength)
             .map((movie: Movie, index: number) => (
               <div
-                key={`${movie.id}-${rowIndex}-${index}`}
-                className="w-1/2 lg:w-auto cursor-pointer flex"
+                key={`${movie?.id}-${rowIndex}-${index}`}
+                className="cursor-pointer flex"
                 onClick={() => {
                   setState((prevState) => ({
                     ...prevState,
@@ -235,14 +251,15 @@ export default function Home() {
                   handleMovieClick(rowIndex * state.rowLength + index);
                 }}
               >
-                <div
-                  className={`p-4 w-full h-full cursor-pointer ${
-                    movies[state.selectedMovieIndex! as number]?.id === movie.id
-                      ? "bg-gray-900 border-b-4 border-slate-200 rounded-tl rounded-tr transition ease-in"
-                      : "hover:bg-slate-800 rounded transition ease-out duration-300"
-                  }`}
-                >
-                  <MovieItem movie={movie} genres={genres} />
+                <div className="w-full h-full cursor-pointer">
+                  <MovieItem
+                    movie={movie}
+                    genres={genres}
+                    isSelected={
+                      movies[state.selectedMovieIndex! as number]?.id ===
+                      movie?.id
+                    }
+                  />
                 </div>
               </div>
             ))}
@@ -257,34 +274,63 @@ export default function Home() {
               setState={setState}
               videoAvailable={
                 state.videos.id ===
-                movies[state.selectedMovieIndex! as number].id
+                movies[state.selectedMovieIndex! as number]?.id
               }
             />
           )}
       </div>
-    )
+    ),
   );
 
   if (typeof window !== "undefined") {
     return (
-      <div className="bg-[#192231] font-roboto overflow-x-hidden">
-        <main className="relative flex bg-[#192231] w-full min-h-screen lg:mx-auto transition-all">
-          <SideMenu selected="home" />
+      <div className="bg-[#111824] font-roboto overflow-x-hidden">
+        <main className="relative flex bg-[#111824] w-full min-h-screen lg:mx-auto transition-all">
           <div className="w-full relative">
-            <Header open={open} setOpen={setOpen} />
-            <div className="mb-20 animate-fadeUp flex flex-col justify-center mx-auto">
-              <HomeHero selectedList={state.selectedList} setState={setState} />
+            <Header
+              open={open}
+              setOpen={setOpen}
+              selectedList={state.selectedList}
+              setState={setState}
+            />
+            <div className="pt-14 animate-fadeUp flex flex-col justify-center mx-auto">
               {error && <div>Failed to load.</div>}
               {!data && <div>Loading...</div>}
-              {rows}
+              <div className="flex flex-col gap-2 p-2">
+                {rows.map((row) => (
+                  <div key={row.key}>{row}</div>
+                ))}
+              </div>
               {data && (
-                <div className="flex justify-center mx-auto pt-10">
+                <div className="flex justify-center">
                   <button
                     onClick={() => fetchNextPage()}
                     disabled={isFetchingNextPage}
-                    className="bg-[#5937ef] hover:bg-[#6a49ff] disabled:bg-[#6a49ff]/40 disabled:text-white/80 text-white text-xs font-medium px-10 py-2.5 w-fit h-fit rounded-full uppercase transition"
+                    className="relative overflow-hidden bg-gradient-to-r from-[#0d0628] via-[#5937ef] to-[#0d0628] hover:via-[#6a49ff] disabled:opacity-40 disabled:text-white/80 text-white text-sm tracking-tighter font-semibold px-10 py-6 w-full uppercase transition shadow-xl shadow-purple-950/60 mb-2 mx-2 rounded-lg"
                   >
-                    {isFetchingNextPage ? "Loading..." : "Show more"}
+                    <span
+                      className="absolute inset-0 pointer-events-none overflow-hidden rounded-lg"
+                      aria-hidden="true"
+                    >
+                      <span className="absolute inset-y-0 left-[3%] w-8 skew-x-12 bg-white/10" />
+                      <span className="absolute inset-y-0 left-[8%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
+                      <span className="absolute inset-y-0 left-[14%] w-6 skew-x-12 bg-white/10" />
+                      <span className="absolute inset-y-0 left-[20%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
+                      <span className="absolute inset-y-0 left-[27%] w-8 skew-x-12 bg-white/10" />
+                      <span className="absolute inset-y-0 left-[34%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
+                      <span className="absolute inset-y-0 left-[41%] w-6 skew-x-12 bg-white/10" />
+                      <span className="absolute inset-y-0 left-[48%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
+                      <span className="absolute inset-y-0 left-[55%] w-8 skew-x-12 bg-white/10" />
+                      <span className="absolute inset-y-0 left-[62%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
+                      <span className="absolute inset-y-0 left-[69%] w-6 skew-x-12 bg-white/10" />
+                      <span className="absolute inset-y-0 left-[76%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
+                      <span className="absolute inset-y-0 left-[83%] w-8 skew-x-12 bg-white/10" />
+                      <span className="absolute inset-y-0 left-[90%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
+                      <span className="absolute inset-y-0 left-[95%] w-6 skew-x-12 bg-white/10" />
+                    </span>
+                    <span className="relative z-10">
+                      {isFetchingNextPage ? "Loading..." : "Show more"}
+                    </span>
                   </button>
                 </div>
               )}

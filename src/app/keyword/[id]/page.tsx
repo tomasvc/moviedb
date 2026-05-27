@@ -1,6 +1,6 @@
 "use client";
 
-import { fetchItemsByKeyword, fetchKeyword } from "@/api";
+import { fetchItemsByKeyword, fetchKeyword } from "@/api/keywords";
 import { KeywordClient } from "./KeywordClient";
 import Loading from "@app/loading";
 import { useQuery } from "@tanstack/react-query";

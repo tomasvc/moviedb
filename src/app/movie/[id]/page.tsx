@@ -6,7 +6,8 @@ import {
   fetchMovieReviews,
   fetchMovieKeywords,
   fetchRecommendedMovies,
-} from "@/api";
+  fetchMovieImages,
+} from "@/api/movies";
 import { CircularProgress } from "@mui/material";
 import { MovieClient } from "./MovieClient";
 import { useQuery } from "@tanstack/react-query";
@@ -28,6 +29,12 @@ export default function MoviePage({ params }: Props) {
     queryKey: ["movie", id],
     queryFn: () => fetchMovieDetails(id),
     enabled: !!id,
+  });
+
+  const { data: images, isLoading: imagesLoading } = useQuery({
+    queryKey: ["images", id],
+    queryFn: () => fetchMovieImages(id),
+    enabled: !!id && !!movie,
   });
 
   const { data: credits, isLoading: creditsLoading } = useQuery({
@@ -72,6 +79,7 @@ export default function MoviePage({ params }: Props) {
       reviews={reviews?.results || []}
       keywords={keywords?.keywords || []}
       recommendations={recommendations?.results || []}
+      images={images || { backdrops: [], logos: [], posters: [] }}
     />
   );
 }
