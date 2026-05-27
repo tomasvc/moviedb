@@ -6,7 +6,7 @@ import moment from "moment";
 import { CircularProgress } from "@mui/material";
 import { movieSearch, personSearch } from "@/api/search";
 import { XIcon, WarningIcon } from "@components/Icons";
-import { SearchResult, APIResponse, SearchGPTResponse, VibeRecommendation } from "@/types/api";
+import { SearchResult, SearchGPTResponse, VibeRecommendation } from "@/types/api";
 
 type VibeResult = {
   movie: SearchResult;
@@ -26,6 +26,7 @@ export const Search = ({
   });
   const [vibeResults, setVibeResults] = useState<VibeResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function fetchSearchResponse(q: string) {
     try {
@@ -44,8 +45,8 @@ export const Search = ({
       setSearchResponse(data as SearchGPTResponse);
     } catch (error: any) {
       console.error("Search error:", error);
+      setErrorMessage(error.message || "Could not process your search. Please try again.");
       setSearchResponse(null);
-    } finally {
       setLoading(false);
     }
   }
@@ -66,6 +67,7 @@ export const Search = ({
     setResults({ movies: [], people: [] });
     setVibeResults([]);
     setSearchResponse(null);
+    setErrorMessage(null);
 
     if (query.length > 0) {
       setLoading(true);
@@ -195,6 +197,9 @@ export const Search = ({
             <CircularProgress size={18} color="inherit" className="text-indigo-500" />
             <p className="text-indigo-400">Searching...</p>
           </div>
+        )}
+        {errorMessage && !loading && (
+          <p className="text-red-400/80 text-sm mt-5 animate-fadeIn">{errorMessage}</p>
         )}
 
         {/* Scrollable results area */}
