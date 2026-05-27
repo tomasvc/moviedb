@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { Header } from "@/components/Header";
-import { SideMenu } from "@/components/SideMenu";
 import { useHeaderContext } from "@/contexts/headerContext";
 import clsx from "clsx";
 import moment from "moment";
@@ -31,7 +29,6 @@ export function PersonClient({
   return (
     <div className="bg-[#192231] font-roboto overflow-x-hidden animate-fadeIn pb-12">
       <Header open={open} setOpen={setOpen} />
-      <SideMenu />
       <main
         className={clsx(
           "bg-[#192231] w-full mx-auto transition-all animate-fadeUp",

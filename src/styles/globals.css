@@ -13,7 +13,7 @@
 body {
   overflow: overlay;
   font-family: "Inter", sans-serif;
-  background: #192231;
+  background: #111824;
 }
 
 ::-webkit-scrollbar {
@@ -22,7 +22,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #192231;
+  background: #111824;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -44,4 +44,55 @@ body {
 
 .page-transition {
   opacity: 0;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.perspective {
+  perspective: 1200px;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-item {
+  backface-visibility: hidden;
+}
+
+/* Movie page backdrop carousel — styles apply to dynamically inserted slides */
+.carousel-images .img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  will-change: clip-path;
+}
+
+.carousel-images .img > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.notched {
+  -webkit-mask:
+    radial-gradient(circle 6px at 0% 83%, transparent 98%, black 100%),
+    radial-gradient(circle 6px at 100% 83%, transparent 98%, black 100%),
+    linear-gradient(black, black);
+
+  -webkit-mask-composite: destination-out, destination-out, source-over;
+  mask-composite: exclude, exclude;
 }

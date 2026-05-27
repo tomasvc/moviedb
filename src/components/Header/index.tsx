@@ -1,18 +1,26 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FilmIcon, SearchIcon } from "../Icons";
+import { SearchIcon } from "../Icons";
 import { Search } from "../Search";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { HomeIcon } from "../Icons";
+import Image from "next/image";
+import Logo from "@/assets/img/logo.svg";
 
 type HeaderProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
+  selectedList?: string;
+  setState?: (state: any) => void;
 };
 
-export const Header = ({ open, setOpen }: HeaderProps) => {
+export const Header = ({
+  open,
+  setOpen,
+  selectedList = "Trending",
+  setState = () => {},
+}: HeaderProps) => {
   const [showSearch, setShowSearch] = useState(false);
   const [headerStyles, setHeaderStyles] = useState("");
 
@@ -59,29 +67,55 @@ export const Header = ({ open, setOpen }: HeaderProps) => {
 
   return (
     <header
-      className={`${
-        open ? "backdrop-blur-md" : "backdrop-blur-sm"
-      } fixed w-full border-b border-slate-600/30 bg-gradient-to-b from-[#0F1827] ${headerStyles} flex transition-all z-40`}
+      className={`fixed w-full border-b border-slate-600/30 ${
+        location.pathname === "/" ? "bg-slate-900" : "bg-transparent"
+      } ${headerStyles} flex transition-all z-40`}
     >
-      <div className="flex flex-col justify-between items-center w-full relative px-1 lg:px-0">
-        <div className="w-full flex justify-between items-center p-2 lg:p-0">
-          <div className="flex gap-2 lg:hidden">
-            <Link
-              href="/"
-              className="text-white p-3 rounded-lg hover:bg-indigo-500/20 transition"
-            >
-              <HomeIcon />
+      <div className="flex flex-col justify-between items-center w-full relative px-6 py-4">
+        <div className="w-full flex justify-between items-center">
+          <nav className="flex items-center gap-10">
+            <Link href="/" className="text-white transition shrink-0">
+              <Image src={Logo} alt="logo" width={50} height={50} />
             </Link>
-            <Link
-              href="/filter"
-              className="text-white p-3 rounded-lg hover:bg-indigo-500/20 transition"
-            >
-              <FilmIcon />
-            </Link>
-          </div>
+            <div className="flex items-center justify-center gap-8">
+              <button
+                onClick={() =>
+                  setState?.((prevState: any) => ({
+                    ...prevState,
+                    selectedList: "Trending",
+                  }))
+                }
+                className="text-white text-xs font-medium w-fit h-fit uppercase transition active:transition-none"
+              >
+                Trending
+              </button>
+              <button
+                onClick={() =>
+                  setState?.((prevState: any) => ({
+                    ...prevState,
+                    selectedList: "Popular",
+                  }))
+                }
+                className="text-white text-xs font-medium w-fit h-fit uppercase transition active:transition-none"
+              >
+                Popular
+              </button>
+              <button
+                onClick={() =>
+                  setState?.((prevState: any) => ({
+                    ...prevState,
+                    selectedList: "Upcoming",
+                  }))
+                }
+                className="text-white text-xs font-medium w-fit h-fit uppercase transition active:transition-none"
+              >
+                Upcoming
+              </button>
+            </div>
+          </nav>
           <div className="flex gap-2 ml-auto">
             <button
-              className="p-3 lg:p-5 text-white hover:bg-indigo-500/20 lg:hover:bg-[#5937ef]/20 rounded-lg lg:rounded-none transition"
+              className="text-white transition"
               onClick={handleOpenSearch}
             >
               <SearchIcon />

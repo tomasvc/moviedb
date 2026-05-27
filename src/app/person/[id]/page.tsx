@@ -5,7 +5,7 @@ import {
   fetchPersonExternals,
   fetchPersonCombinedCredits,
   fetchPersonImages,
-} from "@/api";
+} from "@/api/people";
 import { PersonClient } from "./PersonClient";
 import Loading from "@app/loading";
 import { useQuery } from "@tanstack/react-query";

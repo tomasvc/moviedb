@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import moment from "moment";
 import Image from "next/image";
-import { SideMenu } from "@/components/SideMenu";
 import { BackIcon } from "@/components/Icons";
 import { Pagination } from "@mui/material";
 
@@ -34,7 +33,6 @@ export function KeywordClient({
   return (
     <div className="bg-[#192231] font-roboto overflow-x-hidden animate-fadeIn">
       <Header open={open} setOpen={setOpen} />
-      <SideMenu />
       <main className="bg-[#192231] w-full mx-auto transition-all animate-fadeUp text-white pt-24">
         <div className="w-full 2xl:w-2/3 mx-auto px-4 xl:px-10">
           <div className="flex items-center gap-4 mb-8">

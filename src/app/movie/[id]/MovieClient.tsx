@@ -1,17 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { SideMenu } from "@/components/SideMenu";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/Header";
-import { MovieItem } from "@/components/MovieItem";
+import { MovieItem } from "@/components/MovieItemNew";
 import { useHeaderContext } from "@/contexts/headerContext";
 import clsx from "clsx";
 import moment from "moment";
-import { Review } from "@/components/Review";
+import { Review } from "@/components/ReviewNew";
 import Image from "next/image";
-import { Movie, Credits } from "@/types/api";
+import { Movie, Credits, MovieImagesResponse, MovieImage } from "@/types/api";
+import { MoveLeft, MoveRight } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { CustomEase } from "gsap/CustomEase";
+import { useGSAP } from "@gsap/react";
+import TMDBLogo from "@/assets/img/tmdb.svg";
+import { Carousel3D } from "@/components/Carousel3D";
+import { Slide } from "@/components/Carousel3D/Slide";
+import { Carousel2D } from "@components/Carousel2D";
+
+// Only register GSAP plugins on the client side
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger, CustomEase, useGSAP);
+  CustomEase.create(
+    "hop",
+    "M0,0 C0.071,0.505 0.192,0.726 0.318,0.852 0.45,0.984 0.504,1 1,1",
+  );
+}
+
 export function MovieClient({
   movieId,
   movie,
@@ -19,6 +44,7 @@ export function MovieClient({
   reviews,
   keywords,
   recommendations,
+  images,
 }: {
   movieId: string;
   movie: Movie;
@@ -26,345 +52,519 @@ export function MovieClient({
   reviews: any[];
   keywords: any[];
   recommendations: any[];
+  images: MovieImagesResponse;
 }) {
   const router = useRouter();
 
   const { open, setOpen } = useHeaderContext();
   const [isFixed, setIsFixed] = useState(false);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLSpanElement>(null);
+  const imageMaskRef = useRef<HTMLDivElement>(null);
+  const imageTextRef = useRef<HTMLParagraphElement>(null);
+  const carouselImagesRef = useRef<HTMLDivElement>(null);
+
+  const currentIndexRef = useRef(0);
+  const isAnimatingRef = useRef(false);
+
+  const carouselSlides = useMemo(() => {
+    const slides: { image: string; id: string }[] = [];
+
+    // Add movie backdrop first so it loads as the initial image
+    if (movie?.backdrop_path) {
+      slides.push({
+        image: `https://image.tmdb.org/t/p/original${movie.backdrop_path}`,
+        id: `movie-backdrop-${movie.id}`,
+      });
+    }
+
+    // Add additional high-quality backdrops from the images API
+    images?.backdrops
+      ?.filter((image: MovieImage) => image.height >= 1080)
+      .forEach((image: MovieImage, index: number) => {
+        slides.push({
+          image: `https://image.tmdb.org/t/p/original${image.file_path}`,
+          id: `movie-backdrop-${index}`,
+        });
+      });
+
+    return slides;
+  }, [movie?.backdrop_path, movie?.id, images?.backdrops]);
+
+  // Preload all carousel images in the background
   useEffect(() => {
+    if (carouselSlides.length === 0) return;
+
+    const preloadedImages: HTMLImageElement[] = [];
+
+    carouselSlides.forEach((slide) => {
+      const img = new window.Image();
+      img.src = slide.image;
+      preloadedImages.push(img);
+    });
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      preloadedImages.forEach((img) => {
+        img.src = "";
+      });
+    };
+  }, [carouselSlides]);
+
+  useLayoutEffect(() => {
     setIsFixed(window?.innerWidth > 500);
   }, []);
 
-  const backgroundAttachment = isFixed ? "fixed" : "scroll";
+  const { contextSafe } = useGSAP(
+    () => {
+      // Ensure we're on the client and container exists
+      if (typeof window === "undefined" || !containerRef.current) return;
 
-  const findCreditsByKeyword = (credits: any, keyword: string) => {
-    return (
-      credits?.crew?.filter((item: any) => item.job === keyword).length > 0
+      if (titleRef.current) {
+        gsap.to(titleRef.current, {
+          x: 200,
+          duration: 15,
+          ease: "sine.inOut",
+          repeat: -1,
+          yoyo: true,
+        });
+      }
+
+      if (imageMaskRef.current) {
+        gsap.fromTo(
+          imageMaskRef.current,
+          { height: 0 },
+          {
+            height: 375,
+            duration: 2,
+            delay: 0.2,
+            ease: "power3.out",
+          },
+        );
+      }
+
+      const scrollContainer = containerRef.current;
+      const sections = scrollContainer.querySelectorAll(".snap-section");
+
+      sections.forEach((section, index) => {
+        if (index === 0) return; // Skip hero section
+
+        const sectionContent = section.querySelector(".section-content");
+        if (!sectionContent) return; // Skip if no .section-content found
+
+        gsap.fromTo(
+          sectionContent,
+          { opacity: 0, y: 50 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: section,
+              scroller: scrollContainer,
+              start: "top 80%",
+              toggleActions: "play none none reverse",
+            },
+          },
+        );
+      });
+    },
+    {
+      scope: containerRef,
+      dependencies: [],
+    },
+  );
+
+  useEffect(() => {
+    if (carouselSlides.length > 0 && carouselImagesRef.current) {
+      // Clear any existing slides
+      carouselImagesRef.current.innerHTML = "";
+
+      // Create initial slide
+      const initialSlideContainer = document.createElement("div");
+      initialSlideContainer.classList.add("img");
+
+      const initialSlideImg = document.createElement("img");
+      initialSlideImg.src = carouselSlides[0].image;
+      initialSlideImg.alt = movie?.title || "Movie backdrop";
+
+      initialSlideContainer.appendChild(initialSlideImg);
+      carouselImagesRef.current.appendChild(initialSlideContainer);
+
+      // Reset index when slides change
+      currentIndexRef.current = 0;
+    }
+  }, [carouselSlides, movie?.title]);
+
+  const animateSlide = contextSafe((direction: "left" | "right") => {
+    if (isAnimatingRef.current || !carouselImagesRef.current) return;
+    isAnimatingRef.current = true;
+
+    const viewportWidth = window.innerWidth;
+    const slideOffset = Math.min(viewportWidth * 0.5, 500);
+
+    const currentSlide =
+      carouselImagesRef.current.querySelector(".img:last-child");
+    const currentSlideImage = currentSlide?.querySelector("img");
+
+    const newSlideContainer = document.createElement("div");
+    newSlideContainer.classList.add("img");
+
+    const newSlideImg = document.createElement("img");
+    newSlideImg.src = carouselSlides[currentIndexRef.current]?.image || "";
+    newSlideImg.alt = movie?.title || "Movie backdrop";
+
+    gsap.set(newSlideImg, {
+      x: direction === "left" ? -slideOffset : slideOffset,
+    });
+
+    newSlideContainer.appendChild(newSlideImg);
+    carouselImagesRef.current.appendChild(newSlideContainer);
+
+    // Animate current slide out
+    gsap.to(currentSlideImage as HTMLElement, {
+      x: direction === "left" ? slideOffset : -slideOffset,
+      duration: 1.5,
+      ease: "hop",
+    });
+
+    gsap.fromTo(
+      newSlideContainer,
+      {
+        clipPath:
+          direction === "left"
+            ? "polygon(0% 0%, 0% 0%, 0% 100%, 0% 100%)"
+            : "polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)",
+      },
+      {
+        clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+        duration: 1.5,
+        ease: "hop",
+        onComplete: () => {
+          const imgContainers =
+            carouselImagesRef.current?.querySelectorAll(".img");
+          if (imgContainers && imgContainers.length > 1) {
+            for (let i = 0; i < imgContainers.length - 1; i++) {
+              imgContainers[i].remove();
+            }
+          }
+          isAnimatingRef.current = false;
+        },
+      },
     );
-  };
+
+    gsap.to(newSlideImg, {
+      x: 0,
+      duration: 1.5,
+      ease: "hop",
+    });
+  });
+
+  const handleNext = useCallback(() => {
+    if (isAnimatingRef.current || carouselSlides.length === 0) return;
+    currentIndexRef.current =
+      (currentIndexRef.current + 1) % carouselSlides.length;
+    animateSlide("right");
+  }, [carouselSlides.length, animateSlide]);
+
+  const handlePrev = useCallback(() => {
+    if (isAnimatingRef.current || carouselSlides.length === 0) return;
+    currentIndexRef.current =
+      (currentIndexRef.current - 1 + carouselSlides.length) %
+      carouselSlides.length;
+    animateSlide("left");
+  }, [carouselSlides.length, animateSlide]);
+
+  const backgroundAttachment = isFixed ? "fixed" : "scroll";
 
   return (
     <div
       key={movieId}
-      className="bg-[#192231]-50 overflow-x-hidden animate-fadeIn"
+      ref={containerRef}
+      className="h-screen overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth animate-fadeIn"
+      id="movie-container"
       suppressHydrationWarning
     >
       <Header open={open} setOpen={setOpen} />
-      <SideMenu />
       <main
         className={clsx(
-          "bg-[#192231] w-full mx-auto transition-all animate-fadeUp",
+          "relative w-full mx-auto transition-all animate-fadeUp",
           {
             "blur-md": open,
-          }
+          },
         )}
       >
-        <div
-          className="relative w-screen transition-all"
-          style={{
-            backgroundImage: `url(https://image.tmdb.org/t/p/original${movie?.backdrop_path})`,
-            backgroundSize: "cover",
-            backgroundRepeat: "no-repeat",
-            backgroundAttachment,
-            animation: "none",
-            height: "fit-content",
-            width: "100vw",
-          }}
-        >
-          <div className="absolute bg-black/70 z-20 w-full h-full" />
-          <div className="relative flex flex-col lg:flex-row gap-2 z-30 w-full lg:w-2/3 mx-auto pt-24 pb-12">
-            <div className="rounded-md w-1/2 lg:w-1/3 h-auto mx-auto">
-              <Image
-                src={`https://image.tmdb.org/t/p/w400${movie?.poster_path}`}
-                alt={movie?.title || movie?.name || movie?.original_title || ""}
-                width={400}
-                height={600}
-                className="rounded-md w-full h-auto xl:ml-auto"
-              />
-            </div>
-            <div className="px-4 xl:pl-10 my-4 text-white w-full lg:w-2/3 flex flex-col justify-between">
-              <div>
-                <h1 className="text-white font-semibold text-3xl lg:text-5xl flex items-center gap-4">
-                  {movie?.title || movie?.name || movie?.original_title}
-                </h1>
-                <div className="flex gap-4 mt-2 uppercase font-bold tracking-wider text-sm">
-                  <p
-                    className="text-[#adff4f] font-bold uppercase tracking-wider pb-1"
-                    suppressHydrationWarning
-                  >
-                    {moment(movie?.release_date).format("YYYY")}
-                  </p>
-                  <div className="flex flex-wrap">
-                    {movie?.genres?.map(
-                      (genre: any, index: number, array: any[]) => {
-                        const isLastItem = index === array.length - 1;
-                        return (
-                          <p key={genre.id} className="font-semibold">
-                            {genre.name}
-                            {!isLastItem && (
-                              <span className="font-light px-2">|</span>
-                            )}
-                          </p>
-                        );
-                      }
-                    )}
-                  </div>
-                </div>
-                <h2 className="mt-4 2xl:text-xl italic text-slate-300">
-                  {movie?.tagline}
-                </h2>
-                <p className="mt-4 font-light leading-6 lg:leading-7 text-sm lg:text-base">
-                  {movie?.overview}
-                </p>
+        <div className="carousel fixed inset-0 z-0">
+          <div
+            ref={carouselImagesRef}
+            className="carousel-images w-full h-full"
+          />
+        </div>
+        <div className="fixed inset-0 bg-black/50 z-20 pointer-events-none" />
+        {/* Hero Section */}
+        <section className="snap-section snap-start h-screen w-screen relative flex items-center">
+          <div className="section-content relative flex flex-col gap-2 z-30 w-full h-full mx-auto pb-12 px-6">
+            <div className="h-auto flex gap-6 mt-20">
+              <div
+                ref={imageMaskRef}
+                className="overflow-hidden h-0 flex-shrink-0"
+              >
+                <Image
+                  src={`https://image.tmdb.org/t/p/w400${movie?.poster_path}`}
+                  alt={
+                    movie?.title || movie?.name || movie?.original_title || ""
+                  }
+                  width={250}
+                  height={375}
+                  className="block h-[375px] min-h-[375px]"
+                />
               </div>
-              <div className="text-white flex flex-col gap-4 mt-6">
-                {findCreditsByKeyword(credits, "Director") && (
-                  <div>
-                    <p className="font-bold text-xs lg:text-sm uppercase tracking-wider">
-                      Director
-                    </p>
-                    <div className="flex gap-2 font-light">
-                      {credits?.crew
-                        ?.filter((item) => item.job === "Director")
-                        ?.map((item, index, array) => {
-                          const isLastItem = index === array.length - 1;
-                          return (
-                            <button
-                              onClick={() => router.push(`/person/${item.id}`)}
-                              key={index}
-                              className="whitespace-nowrap text-sm lg:text-base"
-                            >
-                              {!isLastItem && <span>,</span>}
-                              {item.name}
-                            </button>
-                          );
-                        })}
-                    </div>
-                  </div>
+              <div className="my-4 text-white w-full lg:w-2/3 flex flex-col justify-between">
+                <div>
+                  <h2 className="2xl:text-xl italic text-slate-300 max-w-xs">
+                    {movie?.tagline}
+                  </h2>
+                  <p
+                    ref={imageTextRef}
+                    className="mt-4 font-light leading-6 lg:leading-7 text-sm lg:text-base max-w-xs"
+                  >
+                    {movie?.overview}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center absolute top-20 right-8">
+              <Image src={TMDBLogo} alt="TMDB Logo" width={40} height={40} />
+              <p className="text-white text-sm font-bold mt-1">
+                {movie?.vote_average?.toFixed(1)} / 10
+              </p>
+              <p className="text-white text-xs">{movie?.vote_count}</p>
+            </div>
+            <div className="relative w-full mt-32">
+              <h1 className="text-white font-bold uppercase text-3xl lg:text-[70px] flex items-center justify-center gap-4 mx-auto select-none">
+                {movie?.title || movie?.name || movie?.original_title}
+              </h1>
+              <span
+                ref={titleRef}
+                className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-white/5 font-black uppercase text-[300px] whitespace-nowrap select-none"
+              >
+                {movie?.title || movie?.name || movie?.original_title}
+              </span>
+            </div>
+            <div className="flex gap-4 justify-center mt-6 z-50">
+              <button
+                onClick={handlePrev}
+                className="prev-btn text-white px-4 py-2 flex gap-2 items-center"
+              >
+                <MoveLeft />
+                prev
+              </button>
+              <button
+                onClick={handleNext}
+                className="next-btn text-white px-4 py-2 flex gap-2 items-center"
+              >
+                next
+                <MoveRight />
+              </button>
+            </div>
+            <div className="fixed bottom-10 left-6 w-full mt-auto">
+              <p
+                className="font-medium text-white text-2xl uppercase tracking-tighter"
+                suppressHydrationWarning
+              >
+                {moment(movie?.release_date).format("YYYY")}
+              </p>
+              <div className="flex items-center flex-row flex-wrap gap-2 mt-4 text-xs text-[#adff4f]">
+                {movie?.production_companies
+                  ?.filter((item: any) => item.logo_path)
+                  ?.map((item: any) => item.name)
+                  .join(" / ") && (
+                  <span>
+                    {movie?.production_companies
+                      ?.filter((item: any) => item.logo_path)
+                      ?.map((item: any) => item.name)
+                      .join(" / ")}
+                  </span>
                 )}
-
-                {findCreditsByKeyword(credits, "Producer") && (
-                  <div>
-                    <p className="font-bold text-xs lg:text-sm uppercase tracking-wider">
-                      Producers
-                    </p>
-                    <div className="flex flex-wrap gap-2 font-light">
-                      {credits?.crew
-                        ?.filter((item) => item.job === "Producer")
-                        ?.slice(0, 4)
-                        .map((item, index, array) => {
-                          const isLastItem = index === array.length - 1;
-                          return (
-                            <button
-                              onClick={() => router.push(`/person/${item.id}`)}
-                              key={index}
-                              className="whitespace-nowrap text-sm lg:text-base"
-                            >
-                              {item.name}
-                              {!isLastItem && <span>,</span>}
-                            </button>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
-
-                {findCreditsByKeyword(credits, "Screenplay") && (
-                  <div>
-                    <p className="font-bold text-xs lg:text-sm uppercase tracking-wider">
-                      Screenplay
-                    </p>
-                    <div className="flex gap-2 font-light">
-                      {credits?.crew
-                        ?.filter((item) => item.job === "Screenplay")
-                        ?.slice(0, 4)
-                        ?.map((item, index, array) => {
-                          const isLastItem = index === array.length - 1;
-                          return (
-                            <button
-                              onClick={() => router.push(`/person/${item.id}`)}
-                              key={index}
-                              className="whitespace-nowrap text-sm lg:text-base"
-                            >
-                              {item.name}
-                              {!isLastItem && <span>,</span>}
-                            </button>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
+                <span className="w-[50px] h-[1px] bg-white mx-1"></span>
+                <span className="text-white text-xs">
+                  Directed by{" "}
+                  <span className="text-[#adff4f]">
+                    {credits?.crew
+                      ?.filter((item: any) => item.job === "Director")
+                      .map((item: any) => item.name)
+                      .join(", ")}
+                  </span>
+                </span>
+              </div>
+              <div className="flex items-center flex-row flex-wrap gap-6 mt-2">
+                {credits?.cast?.slice(0, 5).map((item: any, index: number) => (
+                  <span key={index} className="text-white text-xs">
+                    {item.name}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="w-full 2xl:w-2/3 mx-auto px-0 xl:px-10 xl:pl-24 2xl:pl-0 flex flex-col-reverse lg:flex-row text-white">
-          <div className="w-full lg:w-3/4 px-4 xl:px-0 divide-y divide-slate-600">
-            <div className="w-full mx-auto 2xl:mx-0 py-8">
-              <div className="flex gap-3">
-                <div className="w-1.5 h-7 bg-blue-400" />
-                <h2 className="text-lg font-medium mb-4 tracking-wide uppercase">
-                  Top Billed Cast
-                </h2>
-              </div>
-
-              <div className="flex gap-2 xl:gap-4 overflow-auto py-4">
-                {credits?.cast?.slice(0, 10).map((item, index) => {
-                  return (
-                    <div
-                      key={index}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => router.push(`/person/${item.id}`)}
-                      className="bg-[#263146] shadow-lg rounded-md cursor-pointer"
-                    >
-                      <div className="w-20 xl:w-40">
-                        <Image
-                          className="w-full rounded-t-md"
-                          src={`https://image.tmdb.org/t/p/w400${item.profile_path}`}
-                          alt={item.name}
-                          width={400}
-                          height={600}
-                        />
-                      </div>
-                      <div className="m-2 text-xs xl:text-base">
-                        <p className="font-bold">{item.name}</p>
-                        <p className="text-xs xl:text-sm">{item.character}</p>
-                      </div>
+        {/* Cast Section */}
+        <section className="snap-section snap-start min-h-screen w-screen relative flex items-center z-50">
+          <div className="section-content w-full mx-auto px-6 py-16">
+            {/* <div
+              ref={castItemsContainerRef}
+              className="flex gap-2 xl:gap-4 overflow-auto py-4"
+            >
+              {credits?.cast?.slice(0, 10).map((item, index) => {
+                return (
+                  <div
+                    key={index}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => router.push(`/person/${item.id}`)}
+                    className="cast-item relative shadow-lg cursor-pointer"
+                  >
+                    <div className="relative w-[200px]">
+                      <Image
+                        className="w-full rounded-t-md"
+                        src={`https://image.tmdb.org/t/p/w400${item.profile_path}`}
+                        alt={item.name}
+                        width={400}
+                        height={600}
+                      />
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/50"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-2 text-xs xl:text-base text-white text-center">
+                      <p className="font-bold uppercase">{item.name}</p>
+                      <p className="text-xs xl:text-sm">{item.character}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div> */}
+            <Carousel3D>
+              {credits?.cast?.slice(0, 10).map((item, index) => {
+                return (
+                  <Slide
+                    key={index}
+                    image={`https://image.tmdb.org/t/p/w400${item.profile_path}`}
+                    title={item.name}
+                    tag={item.character}
+                  />
+                );
+              })}
+            </Carousel3D>
+          </div>
+        </section>
+
+        {/* Reviews Section */}
+        <section className="snap-section snap-start min-h-screen w-screen relative flex items-center z-30">
+          {reviews?.length > 0 && (
+            <Carousel2D>
+              {reviews?.map((review: any, index: number) => {
+                return (
+                  <div
+                    key={index}
+                    className="snap-center shrink-0 w-[min(400px,85vw)]"
+                  >
+                    <Review review={review} index={index} />
+                  </div>
+                );
+              })}
+            </Carousel2D>
+          )}
+        </section>
+
+        {/* Recommendations Section */}
+        <section className="snap-section snap-start min-h-screen w-screen relative flex items-center z-30">
+          <div className="section-content w-full mx-auto">
+            <div className="flex overflow-x-scroll pb-4">
+              {recommendations?.map((item: any, index: number) => {
+                return (
+                  <Link
+                    href={`/movie/${item.id}`}
+                    className="min-w-[150px]"
+                    key={index}
+                    prefetch={true}
+                  >
+                    <MovieItem movie={item} />
+                  </Link>
+                );
+              })}
             </div>
-            {reviews?.length > 0 && (
-              <div className="w-full mx-auto py-8">
-                <div className="flex gap-3 items-center mb-4">
-                  <div className="w-1.5 h-7 bg-blue-400" />
-                  <h2 className="text-lg font-medium uppercase mr-4 tracking-wide">
-                    Social
-                  </h2>
-                  <button className="font-semibold mt-1.5 pb-1 border-b-4 border-slate-600">
-                    Reviews {reviews?.length}
-                  </button>
+
+            {/* Movie Details */}
+            <div className="flex flex-col gap-8">
+              <div className="mt-8 mx-6">
+                <div className="flex gap-3 mb-2">
+                  <p className="font-semibold uppercase tracking-wide text-white text-sm">
+                    Keywords
+                  </p>
                 </div>
-                <div className="flex flex-col gap-1">
-                  {reviews?.map((review: any, index: number) => {
-                    return <Review review={review} index={index} key={index} />;
+                <div className="flex flex-wrap gap-x-4 gap-y-1 max-w-[800px]">
+                  {keywords?.map((item: any, index: number) => {
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => router.push(`/keyword/${item.id}`)}
+                        className="text-xs text-white w-fit"
+                      >
+                        {item.name}
+                      </button>
+                    );
                   })}
                 </div>
               </div>
-            )}
-            <div className="relative w-full mx-auto py-10">
-              <div className="flex gap-3 mb-2">
-                <div className="w-1.5 h-7 bg-blue-400" />
-                <h2 className="text-lg font-medium mb-4 tracking-wide uppercase">
-                  Recommendations
-                </h2>
-              </div>
-              <div className="flex overflow-x-scroll gap-5">
-                {recommendations?.map((item: any, index: number) => {
-                  return (
-                    <Link
-                      href={`/movie/${item.id}`}
-                      className="min-w-[150px]"
-                      key={index}
-                      prefetch={true}
-                    >
-                      <MovieItem movie={item} />
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-          <div className="w-full lg:w-1/4 py-8 px-4 xl:px-10">
-            <div className="text-sm grid grid-cols-2 lg:flex flex-row lg:flex-col gap-4">
-              <div>
-                <label className="font-semibold">Status</label>
-                <p>{movie?.status}</p>
-              </div>
-              <div>
-                <label className="font-semibold">Original language</label>
-                <p>{movie?.spoken_languages?.[0]?.name}</p>
-              </div>
-              {movie?.runtime && movie?.runtime > 0 && (
+              <div className="flex gap-12 text-sm text-white mx-6">
                 <div>
-                  <label className="font-semibold">Runtime</label>
-                  <p>
-                    {Math.floor(movie?.runtime / 60)}h {movie?.runtime % 60}m
+                  <label className="font-semibold text-sm uppercase">
+                    Status
+                  </label>
+                  <p className="text-xs pt-2">{movie?.status}</p>
+                </div>
+                {movie?.runtime && movie?.runtime > 0 && (
+                  <div>
+                    <label className="font-semibold text-sm uppercase">
+                      Runtime
+                    </label>
+                    <p className="text-xs pt-2">
+                      {Math.floor(movie?.runtime / 60)}h {movie?.runtime % 60}m
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="font-semibold text-sm uppercase">
+                    Budget
+                  </label>
+                  <p className="text-xs pt-2">
+                    {movie?.budget && movie?.budget > 0
+                      ? `$${movie?.budget.toLocaleString()}`
+                      : "Not available"}
                   </p>
                 </div>
-              )}
-              <div>
-                <label className="font-semibold">Budget</label>
-                <p>
-                  {movie?.budget && movie?.budget > 0
-                    ? `$${movie?.budget.toLocaleString()}`
-                    : "Not available"}
-                </p>
-              </div>
-              <div>
-                <label className="font-semibold">Revenue</label>
-                <p>
-                  {movie?.revenue && movie?.revenue > 0
-                    ? `$${movie?.revenue.toLocaleString()}`
-                    : "Not available"}
-                </p>
-              </div>
-              <div>
-                <label className="font-semibold">Production companies</label>
-                <div className="flex flex-row flex-wrap gap-2 mt-2">
-                  {movie?.production_companies?.map(
-                    (item: any, index: number) => {
-                      if (!item.logo_path) {
-                        return null;
-                      }
-                      return (
-                        <div
-                          key={index}
-                          className="flex flex-col justify-center items-center w-fit h-max bg-white rounded"
-                        >
-                          <div className="w-16 h-auto p-1.5">
-                            <Image
-                              className="w-full h-full object-cover"
-                              src={`https://image.tmdb.org/t/p/w200${item.logo_path}`}
-                              alt={item.name}
-                              width={200}
-                              height={200}
-                            />
-                          </div>
-                        </div>
-                      );
-                    }
-                  )}
+                <div>
+                  <label className="font-semibold text-sm uppercase">
+                    Revenue
+                  </label>
+                  <p className="text-xs pt-2">
+                    {movie?.revenue && movie?.revenue > 0
+                      ? `$${movie?.revenue.toLocaleString()}`
+                      : "Not available"}
+                  </p>
                 </div>
               </div>
-            </div>
-            <div>
-              <div className="flex gap-3 mt-8 mb-2">
-                <div className="w-1.5 h-7 bg-blue-400" />
-                <p className="text-lg font-medium uppercase tracking-wide mb-2">
-                  Keywords
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {keywords?.map((item: any, index: number) => {
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => router.push(`/keyword/${item.id}`)}
-                      className="bg-[#263146] text-xs xl:text-sm rounded border border-slate-600 text-slate-200 w-fit px-2 py-1"
-                    >
-                      {item.name}
-                    </button>
-                  );
-                })}
+              <div className="flex flex-col gap-2 text-sm text-white mx-6">
+                <label className="font-semibold text-sm uppercase">
+                  Original language
+                </label>
+                <p className="text-xs">{movie?.spoken_languages?.[0]?.name}</p>
               </div>
             </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
