@@ -84,35 +84,45 @@ export const Search = ({
         const titles = searchResponse.titles;
         const people = searchResponse.people;
 
-        const [movieData, personData] = await Promise.all([
-          Promise.all(titles.map((t) => movieSearch(t, 1))),
-          Promise.all(people.map((p) => personSearch(p, 1))),
+        const [movieSettled, personSettled] = await Promise.all([
+          Promise.allSettled(titles.map((t) => movieSearch(t, 1))),
+          Promise.allSettled(people.map((p) => personSearch(p, 1))),
         ]);
 
-        const movies = movieData
-          .map((r) => r?.results?.[0])
+        const movies = movieSettled
+          .flatMap((r) => (r.status === "fulfilled" ? [r.value?.results?.[0]] : []))
           .filter((m): m is SearchResult => !!m);
-        const peopleResults = personData
-          .map((r) => r?.results?.[0] as SearchResult | undefined)
+
+        const peopleResults = personSettled
+          .flatMap((r) => (r.status === "fulfilled" ? [r.value?.results?.[0] as SearchResult | undefined] : []))
           .filter((p): p is SearchResult => !!p);
 
         setResults({ movies, people: peopleResults });
       } else if (searchResponse.mode === "vibe") {
         const recs = searchResponse.recommendations;
-        const resolved = await Promise.all(
+        const settled = await Promise.allSettled(
           recs.map(async (rec: VibeRecommendation) => {
             const result = await movieSearch(rec.title, 1);
             const movie = result?.results?.[0];
             return movie ? { movie, blurb: rec.blurb } : null;
           })
         );
-        setVibeResults(resolved.filter((r): r is VibeResult => r !== null));
+        const resolved = settled
+          .filter((r): r is PromiseFulfilledResult<VibeResult | null> => r.status === "fulfilled")
+          .map((r) => r.value)
+          .filter((r): r is VibeResult => r !== null);
+        setVibeResults(resolved);
       }
-
-      setLoading(false);
     };
 
-    resolve();
+    resolve()
+      .catch((err) => {
+        console.error("Resolve error:", err);
+        setErrorMessage("Could not load results. Please try again.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [searchResponse]);
 
   const handleClose = () => {
