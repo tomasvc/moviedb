@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 // import { MovieItem } from "@/components/MovieItem";
 import { MovieItem } from "@components/MovieItemNew";
 import { HomeMovieHero } from "@/components/HomeMovieHero";
@@ -43,7 +44,26 @@ export default function Home() {
     loadedPages: 0,
   });
   const { open, setOpen } = useHeaderContext();
+  const searchParams = useSearchParams();
   const playerRef = useRef(null);
+
+  useEffect(() => {
+    const list = searchParams.get("list");
+    if (!list) return;
+
+    const labels: Record<string, string> = {
+      trending: "Trending",
+      popular: "Popular",
+      upcoming: "Upcoming",
+    };
+    const selected = labels[list.toLowerCase()];
+    if (!selected) return;
+
+    setState((prev) =>
+      prev.selectedList === selected ? prev : { ...prev, selectedList: selected },
+    );
+  }, [searchParams]);
+
   const loadedPagesRef = useRef(state.loadedPages);
   const [videoJsOptions, setVideoJsOptions] = useState({
     autoplay: false,

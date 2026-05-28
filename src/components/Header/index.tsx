@@ -6,7 +6,7 @@ import { Search } from "../Search";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Logo from "@/assets/img/logo.svg";
 
 type HeaderProps = {
@@ -25,6 +25,7 @@ export const Header = ({
   const [showSearch, setShowSearch] = useState(false);
   const [headerStyles, setHeaderStyles] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     setOpen(false);
@@ -67,6 +68,22 @@ export const Header = ({
     }
   }, [showSearch]);
 
+  const links = [
+    { label: "Trending", slug: "trending" },
+    { label: "Popular", slug: "popular" },
+    { label: "Upcoming", slug: "upcoming" },
+  ] as const;
+
+  const handleListClick = (label: string, slug: string) => {
+    if (pathname === "/") {
+      setState?.((prevState: any) => ({
+        ...prevState,
+        selectedList: label,
+      }));
+    }
+    router.push(`/?list=${slug}`);
+  };
+
   return (
     <header
       className={`fixed w-full border-b border-slate-600/30 ${
@@ -80,39 +97,24 @@ export const Header = ({
               <Image src={Logo} alt="logo" width={50} height={50} />
             </Link>
             <div className="flex items-center justify-center gap-8">
-              <button
-                onClick={() =>
-                  setState?.((prevState: any) => ({
-                    ...prevState,
-                    selectedList: "Trending",
-                  }))
-                }
-                className="text-white text-xs font-medium w-fit h-fit uppercase transition active:transition-none"
-              >
-                Trending
-              </button>
-              <button
-                onClick={() =>
-                  setState?.((prevState: any) => ({
-                    ...prevState,
-                    selectedList: "Popular",
-                  }))
-                }
-                className="text-white text-xs font-medium w-fit h-fit uppercase transition active:transition-none"
-              >
-                Popular
-              </button>
-              <button
-                onClick={() =>
-                  setState?.((prevState: any) => ({
-                    ...prevState,
-                    selectedList: "Upcoming",
-                  }))
-                }
-                className="text-white text-xs font-medium w-fit h-fit uppercase transition active:transition-none"
-              >
-                Upcoming
-              </button>
+              {links.map((link, index) => {
+                const isSelected = selectedList === link.label;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => handleListClick(link.label, link.slug)}
+                    key={index}
+                    aria-current={isSelected ? "page" : undefined}
+                    className={`pb-1 text-xs font-medium uppercase tracking-wide border-b-2 transition-colors ${
+                      isSelected
+                        ? "text-white border-[#5937ef]"
+                        : "text-white/50 border-transparent hover:text-white/80"
+                    }`}
+                  >
+                    {link.label}
+                  </button>
+                );
+              })}
             </div>
           </nav>
           <div className="flex gap-2 ml-auto">
