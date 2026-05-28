@@ -69,7 +69,7 @@ export const HomeMovieHero = ({
                     showVideo: true,
                   }))
                 }
-                className="lg:hidden flex items-center gap-2 text-white/90 hover:text-white transition"
+                className="lg:hidden flex items-center gap-2 rounded-md bg-[#5937ef]/90 px-4 py-2.5 text-white font-semibold uppercase tracking-wide text-xs transition hover:bg-[#6b4aff] min-h-[44px]"
               >
                 <PlayIcon />
                 <span className="uppercase font-medium tracking-wide text-xs whitespace-nowrap">
@@ -89,7 +89,7 @@ export const HomeMovieHero = ({
                   showVideo: true,
                 }))
               }
-              className="flex-shrink-0 w-[320px] h-[180px] flex flex-col items-center justify-center gap-2 z-20 text-white/90 hover:text-white bg-slate-950/30 backdrop-blur-sm border border-slate-700/50 rounded-sm hover:bg-slate-950/40 hover:scale-[1.02] transition-all duration-300 ease-out"
+              className="group flex-shrink-0 w-[320px] h-[180px] flex flex-col items-center justify-center gap-2 z-20 text-white bg-[#5937ef]/20 backdrop-blur-sm border border-[#5937ef]/40 rounded-md hover:bg-[#5937ef]/35 hover:border-[#6b4aff]/60 hover:scale-[1.02] transition-all duration-300 ease-out shadow-lg shadow-purple-950/30"
             >
               <PlayIcon />
               <p className="uppercase font-medium tracking-wide text-sm whitespace-nowrap">

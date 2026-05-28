@@ -7,11 +7,13 @@ import {
   fetchMovieKeywords,
   fetchRecommendedMovies,
   fetchMovieImages,
+  fetchMovieVideos,
 } from "@/api/movies";
 import { CircularProgress } from "@mui/material";
 import { MovieClient } from "./MovieClient";
+import { tmdbBackdropUrl } from "@/lib/tmdbImage";
 import { useQuery } from "@tanstack/react-query";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -63,7 +65,43 @@ export default function MoviePage({ params }: Props) {
     }
   );
 
-  if (!movie || movieLoading) {
+  const { data: movieVideos } = useQuery({
+    queryKey: ["videos", id],
+    queryFn: () => fetchMovieVideos(id),
+    enabled: !!id && !!movie,
+  });
+
+  const [backdropReady, setBackdropReady] = useState(false);
+
+  useEffect(() => {
+    setBackdropReady(false);
+  }, [id]);
+
+  useEffect(() => {
+    const url = tmdbBackdropUrl(movie?.backdrop_path, "w1280");
+    if (!url) {
+      setBackdropReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    const img = new window.Image();
+    const finish = () => {
+      if (!cancelled) setBackdropReady(true);
+    };
+    img.onload = finish;
+    img.onerror = finish;
+    img.src = url;
+
+    return () => {
+      cancelled = true;
+      img.onload = null;
+      img.onerror = null;
+      img.src = "";
+    };
+  }, [movie?.backdrop_path]);
+
+  if (!movie || movieLoading || !backdropReady) {
     return <Loading />;
   }
 
@@ -80,6 +118,7 @@ export default function MoviePage({ params }: Props) {
       keywords={keywords?.keywords || []}
       recommendations={recommendations?.results || []}
       images={images || { backdrops: [], logos: [], posters: [] }}
+      videos={movieVideos?.results || []}
     />
   );
 }

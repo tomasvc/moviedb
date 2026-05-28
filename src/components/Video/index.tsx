@@ -1,58 +1,66 @@
+"use client";
+
 import { useEffect, useRef } from "react";
 import videojs from "video.js";
+import type Player from "video.js/dist/types/player";
 import "video.js/dist/video-js.css";
 import "videojs-youtube";
+import clsx from "clsx";
 
-export const Video = (props: any) => {
-  const videoRef = useRef(null);
-  const playerRef = useRef(null);
-  const { options, onReady } = props;
+export type VideoJsOptions = {
+  autoplay?: boolean;
+  controls?: boolean;
+  responsive?: boolean;
+  fluid?: boolean;
+  techOrder?: string[];
+  sources: { src: string; type: string }[];
+  youtube?: Record<string, number>;
+};
 
-  const data = `{"techOrder": ["youtube"], "sources": [{ "type": "video/youtube", "src": "${options.src}" }], "youtube": { "iv_load_policy": 1 }}`;
+type VideoProps = {
+  options: VideoJsOptions;
+  className?: string;
+  onReady?: (player: Player) => void;
+};
 
-  useEffect(() => {
-    if (!playerRef.current) {
-      const videoElement = document.createElement("video-js");
-      if (videoRef.current) {
-        videoElement.classList.add("vjs-big-play-centered");
-        (videoRef.current as HTMLElement).appendChild(videoElement);
-      }
-
-      const player = ((playerRef.current as any) = videojs(
-        videoElement,
-        options,
-        () => {
-          videojs.log("player is ready");
-          onReady && onReady(player);
-        }
-      ));
-    } else {
-      const player = playerRef.current as any;
-
-      player.autoplay(options.autoplay);
-      player.src(options.sources);
-    }
-  }, [options, videoRef]);
+export function Video({ options, className, onReady }: VideoProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<Player | null>(null);
 
   useEffect(() => {
+    if (!containerRef.current) return;
+
+    const videoElement = document.createElement("video-js");
+    videoElement.classList.add("vjs-big-play-centered", "vjs-16-9");
+    containerRef.current.appendChild(videoElement);
+
+    const player = videojs(videoElement, options, () => {
+      onReady?.(player);
+    });
+    playerRef.current = player;
+
     return () => {
-      const player = playerRef.current as any;
       if (player && !player.isDisposed()) {
         player.dispose();
-        playerRef.current = null;
+      }
+      playerRef.current = null;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
       }
     };
-  }, [playerRef]);
+    // Re-mount player when sources change (parent uses key for full resets)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.sources[0]?.src]);
 
   return (
     <div
       data-vjs-player
-      className="w-full h-full flex justify-center items-center"
+      className={clsx(
+        "movie-video-player-inner flex h-full w-full items-center justify-center",
+        className,
+      )}
     >
-      <div
-        className="w-[100vw] h-[60vh] xl:w-[50vw] xl:h-[50vh] flex justify-center items-center"
-        ref={videoRef}
-      />
+      <div ref={containerRef} className="h-full w-full" />
     </div>
   );
-};
+}

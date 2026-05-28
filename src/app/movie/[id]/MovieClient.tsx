@@ -27,6 +27,10 @@ import TMDBLogo from "@/assets/img/tmdb.svg";
 import { Carousel3D } from "@/components/Carousel3D";
 import { Slide } from "@/components/Carousel3D/Slide";
 import { Carousel2D } from "@components/Carousel2D";
+import { MovieVideoModal } from "@/components/MovieVideoModal";
+import { PlayIcon } from "@/components/Icons";
+import { getYoutubeVideos, type MovieVideo } from "@/lib/movieVideos";
+import { tmdbBackdropUrl } from "@/lib/tmdbImage";
 
 // Only register GSAP plugins on the client side
 if (typeof window !== "undefined") {
@@ -55,6 +59,7 @@ export function MovieClient({
   keywords,
   recommendations,
   images,
+  videos = [],
 }: {
   movieId: string;
   movie: Movie;
@@ -63,11 +68,15 @@ export function MovieClient({
   keywords: any[];
   recommendations: any[];
   images: MovieImagesResponse;
+  videos?: MovieVideo[];
 }) {
   const router = useRouter();
 
   const { open, setOpen } = useHeaderContext();
   const [posterHeight, setPosterHeight] = useState(375);
+  const [showVideo, setShowVideo] = useState(false);
+  const youtubeVideos = useMemo(() => getYoutubeVideos(videos), [videos]);
+  const hasTrailer = youtubeVideos.length > 0;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLSpanElement>(null);
@@ -80,11 +89,14 @@ export function MovieClient({
 
   const carouselSlides = useMemo(() => {
     const slides: { image: string; id: string }[] = [];
+    const seenUrls = new Set<string>();
 
     // Add movie backdrop first so it loads as the initial image
-    if (movie?.backdrop_path) {
+    const primaryBackdrop = tmdbBackdropUrl(movie?.backdrop_path, "w1280");
+    if (primaryBackdrop) {
+      seenUrls.add(primaryBackdrop);
       slides.push({
-        image: `https://image.tmdb.org/t/p/original${movie.backdrop_path}`,
+        image: primaryBackdrop,
         id: `movie-backdrop-${movie.id}`,
       });
     }
@@ -93,14 +105,21 @@ export function MovieClient({
     images?.backdrops
       ?.filter((image: MovieImage) => image.height >= 1080)
       .forEach((image: MovieImage, index: number) => {
+        const url = tmdbBackdropUrl(image.file_path, "w1280");
+        if (!url || seenUrls.has(url)) return;
+        seenUrls.add(url);
         slides.push({
-          image: `https://image.tmdb.org/t/p/original${image.file_path}`,
+          image: url,
           id: `movie-backdrop-${index}`,
         });
       });
 
     return slides;
   }, [movie?.backdrop_path, movie?.id, images?.backdrops]);
+
+  const initialBackdropUrl = carouselSlides[0]?.image;
+  const movieTitle =
+    movie?.title || movie?.name || movie?.original_title || "Movie backdrop";
 
   // Preload all carousel images in the background
   useEffect(() => {
@@ -193,25 +212,11 @@ export function MovieClient({
   );
 
   useEffect(() => {
-    if (carouselSlides.length > 0 && carouselImagesRef.current) {
-      // Clear any existing slides
-      carouselImagesRef.current.innerHTML = "";
+    currentIndexRef.current = 0;
+  }, [movieId, initialBackdropUrl]);
 
-      // Create initial slide
-      const initialSlideContainer = document.createElement("div");
-      initialSlideContainer.classList.add("img");
-
-      const initialSlideImg = document.createElement("img");
-      initialSlideImg.src = carouselSlides[0].image;
-      initialSlideImg.alt = movie?.title || "Movie backdrop";
-
-      initialSlideContainer.appendChild(initialSlideImg);
-      carouselImagesRef.current.appendChild(initialSlideContainer);
-
-      // Reset index when slides change
-      currentIndexRef.current = 0;
-    }
-  }, [carouselSlides, movie?.title]);
+  const backdropImgClassName =
+    "absolute inset-0 block h-full w-full min-h-full min-w-full object-cover object-center";
 
   const animateSlide = contextSafe((direction: "left" | "right") => {
     if (isAnimatingRef.current || !carouselImagesRef.current) return;
@@ -223,13 +228,17 @@ export function MovieClient({
     const currentSlide =
       carouselImagesRef.current.querySelector(".img:last-child");
     const currentSlideImage = currentSlide?.querySelector("img");
+    const currentAnimTarget = (currentSlideImage ?? currentSlide) as
+      | HTMLElement
+      | undefined;
 
     const newSlideContainer = document.createElement("div");
     newSlideContainer.classList.add("img");
 
     const newSlideImg = document.createElement("img");
     newSlideImg.src = carouselSlides[currentIndexRef.current]?.image || "";
-    newSlideImg.alt = movie?.title || "Movie backdrop";
+    newSlideImg.alt = movieTitle;
+    newSlideImg.className = backdropImgClassName;
 
     gsap.set(newSlideImg, {
       x: direction === "left" ? -slideOffset : slideOffset,
@@ -238,12 +247,13 @@ export function MovieClient({
     newSlideContainer.appendChild(newSlideImg);
     carouselImagesRef.current.appendChild(newSlideContainer);
 
-    // Animate current slide out
-    gsap.to(currentSlideImage as HTMLElement, {
-      x: direction === "left" ? slideOffset : -slideOffset,
-      duration: 1.5,
-      ease: "hop",
-    });
+    if (currentAnimTarget) {
+      gsap.to(currentAnimTarget, {
+        x: direction === "left" ? slideOffset : -slideOffset,
+        duration: 1.5,
+        ease: "hop",
+      });
+    }
 
     gsap.fromTo(
       newSlideContainer,
@@ -298,11 +308,32 @@ export function MovieClient({
     <div
       key={movieId}
       ref={containerRef}
-      className="h-[100dvh] overflow-y-auto overflow-x-hidden scroll-smooth animate-fadeIn md:h-screen md:snap-y md:snap-mandatory"
+      className="h-[100dvh] overflow-y-auto overflow-x-hidden scroll-smooth md:h-screen md:snap-y md:snap-mandatory"
       id="movie-container"
       suppressHydrationWarning
     >
       <Header open={open} setOpen={setOpen} />
+      <div
+        className={clsx("carousel fixed inset-0 z-0 transition-all", {
+          "blur-md": open,
+        })}
+      >
+        <div
+          ref={carouselImagesRef}
+          className="carousel-images w-full h-full"
+        >
+          {initialBackdropUrl && (
+            <div
+              className="img img--bg"
+              data-initial-slide
+              role="img"
+              aria-label={movieTitle}
+              style={{ backgroundImage: `url("${initialBackdropUrl}")` }}
+            />
+          )}
+        </div>
+      </div>
+      <div className="fixed inset-0 bg-black/50 z-20 pointer-events-none" />
       <main
         className={clsx(
           "relative w-full mx-auto transition-all animate-fadeUp",
@@ -311,17 +342,9 @@ export function MovieClient({
           },
         )}
       >
-        <div className="carousel fixed inset-0 z-0">
-          <div
-            ref={carouselImagesRef}
-            className="carousel-images w-full h-full"
-          />
-        </div>
-        <div className="fixed inset-0 bg-black/50 z-20 pointer-events-none" />
-        {/* Hero Section */}
-        <section className="snap-section md:snap-start min-h-[100dvh] md:min-h-0 md:h-screen w-full max-w-full relative flex items-start md:items-center">
-          <div className="section-content relative flex flex-col gap-3 z-30 w-full min-h-[100dvh] md:h-full mx-auto pb-8 md:pb-12 px-4 sm:px-6">
-            <div className="flex items-start justify-between gap-3 pt-20 sm:pt-24 md:pt-20">
+        <section className="snap-section md:snap-start min-h-[100dvh] md:min-h-0 md:h-screen w-full max-w-full relative flex flex-col">
+          <div className="section-content relative flex flex-col z-30 w-full min-h-[100dvh] md:h-full mx-auto pb-8 md:pb-36 px-4 sm:px-6">
+            <div className="flex flex-shrink-0 items-start justify-between gap-3 pt-20 sm:pt-24 md:pt-20">
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 flex-1 min-w-0">
                 <div
                   ref={imageMaskRef}
@@ -345,16 +368,16 @@ export function MovieClient({
                     }}
                   />
                 </div>
-                <div className="text-white w-full sm:flex-1 lg:w-2/3 flex flex-col justify-between min-w-0">
+                <div className="text-white w-full sm:flex-1 lg:w-2/3 flex flex-col min-w-0 md:max-h-[32vh] md:overflow-hidden">
                   <div>
                     {movie?.tagline && (
-                      <h2 className="text-sm sm:text-base 2xl:text-xl italic text-slate-300">
+                      <h2 className="text-sm sm:text-base 2xl:text-xl italic text-slate-300 line-clamp-2">
                         {movie?.tagline}
                       </h2>
                     )}
                     <p
                       ref={imageTextRef}
-                      className="mt-2 sm:mt-4 font-light leading-relaxed text-sm sm:text-base lg:leading-7 line-clamp-6 sm:line-clamp-none"
+                      className="mt-2 sm:mt-4 font-light leading-relaxed text-sm sm:text-base lg:leading-7 line-clamp-4 sm:line-clamp-5 md:line-clamp-6"
                     >
                       {movie?.overview}
                     </p>
@@ -371,37 +394,53 @@ export function MovieClient({
                 </p>
               </div>
             </div>
-            <div className="relative w-full mt-6 sm:mt-12 md:mt-24 lg:mt-32 px-1">
-              <h1 className="text-white font-bold uppercase text-2xl sm:text-3xl md:text-5xl lg:text-[70px] text-center leading-tight mx-auto select-none break-words">
-                {movie?.title || movie?.name || movie?.original_title}
-              </h1>
-              <span
-                ref={titleRef}
-                aria-hidden
-                className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-white/5 font-black uppercase text-[4.5rem] sm:text-[8rem] md:text-[12rem] lg:text-[300px] whitespace-nowrap select-none max-w-[100vw] overflow-hidden"
-              >
-                {movie?.title || movie?.name || movie?.original_title}
-              </span>
-            </div>
-            <div className="flex gap-3 sm:gap-4 justify-center mt-4 sm:mt-6 z-50">
+
+            <div className="mt-auto flex flex-shrink-0 flex-col items-center w-full pt-6 md:pt-0">
+              <div className="relative flex w-full min-h-[7rem] sm:min-h-[9rem] md:min-h-[11rem] lg:min-h-[13rem] items-center justify-center px-1 overflow-hidden">
+                <span
+                  ref={titleRef}
+                  aria-hidden
+                  className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white/5 font-black uppercase text-[4.5rem] sm:text-[8rem] md:text-[12rem] lg:text-[300px] whitespace-nowrap select-none max-w-[100vw]"
+                >
+                  {movie?.title || movie?.name || movie?.original_title}
+                </span>
+                <h1 className="relative z-10 text-white font-bold uppercase text-2xl sm:text-3xl md:text-5xl lg:text-[70px] text-center leading-tight mx-auto select-none break-words max-w-5xl">
+                  {movie?.title || movie?.name || movie?.original_title}
+                </h1>
+              </div>
+              <div className="flex flex-wrap gap-3 sm:gap-4 justify-center items-center mt-4 sm:mt-5 z-50">
               <button
                 type="button"
                 onClick={handlePrev}
-                className="prev-btn text-white px-3 sm:px-4 py-2 flex gap-2 items-center text-sm sm:text-base min-h-[44px]"
+                className="prev-btn text-white px-3 sm:px-4 py-2 flex gap-2 items-center text-sm sm:text-base min-h-[44px] rounded-md border border-white/20 hover:bg-white/10 transition"
+                aria-label="Previous backdrop"
               >
                 <MoveLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 prev
               </button>
+              {hasTrailer && (
+                <button
+                  type="button"
+                  onClick={() => setShowVideo(true)}
+                  className="flex items-center gap-2 rounded-md bg-[#5937ef] px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-white shadow-lg shadow-purple-950/50 transition hover:bg-[#6b4aff] min-h-[44px]"
+                >
+                  <PlayIcon />
+                  Watch trailer
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleNext}
-                className="next-btn text-white px-3 sm:px-4 py-2 flex gap-2 items-center text-sm sm:text-base min-h-[44px]"
+                className="next-btn text-white px-3 sm:px-4 py-2 flex gap-2 items-center text-sm sm:text-base min-h-[44px] rounded-md border border-white/20 hover:bg-white/10 transition"
+                aria-label="Next backdrop"
               >
                 next
                 <MoveRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
+              </div>
             </div>
-            <div className="relative md:fixed md:bottom-10 md:left-6 w-full mt-6 md:mt-auto pr-4 md:pr-8">
+
+            <div className="relative md:fixed md:bottom-10 md:left-6 w-full flex-shrink-0 mt-6 md:mt-0 pr-4 md:pr-8 pointer-events-auto">
               <p
                 className="font-medium text-white text-xl sm:text-2xl uppercase tracking-tighter"
                 suppressHydrationWarning
@@ -442,7 +481,6 @@ export function MovieClient({
           </div>
         </section>
 
-        {/* Cast Section */}
         <section className="snap-section md:snap-start min-h-[80dvh] md:min-h-screen w-full max-w-full relative flex items-center z-50 py-8 md:py-0">
           <div className="section-content w-full mx-auto px-2 sm:px-6 py-8 sm:py-12 md:py-16">
             {/* <div
@@ -491,7 +529,6 @@ export function MovieClient({
           </div>
         </section>
 
-        {/* Reviews Section */}
         <section className="snap-section md:snap-start min-h-[60dvh] md:min-h-screen w-full max-w-full relative flex items-center z-30">
           {reviews?.length > 0 ? (
             <Carousel2D>
@@ -506,7 +543,6 @@ export function MovieClient({
           )}
         </section>
 
-        {/* Recommendations Section */}
         <section className="snap-section md:snap-start min-h-[80dvh] md:min-h-screen w-full max-w-full relative flex items-start md:items-center z-30 py-8 md:py-0">
           <div className="section-content w-full mx-auto">
             {recommendations?.length > 0 && (
@@ -529,7 +565,6 @@ export function MovieClient({
               </>
             )}
 
-            {/* Movie Details */}
             <div className="flex flex-col gap-6 sm:gap-8 mt-6 sm:mt-8">
               {keywords?.length > 0 && (
                 <div className="mx-4 sm:mx-6">
@@ -601,6 +636,16 @@ export function MovieClient({
           </div>
         </section>
       </main>
+
+      <MovieVideoModal
+        open={showVideo}
+        onClose={() => setShowVideo(false)}
+        movieTitle={
+          movie?.title || movie?.name || movie?.original_title || "Trailer"
+        }
+        backdropPath={movie?.backdrop_path}
+        videos={videos}
+      />
     </div>
   );
 }

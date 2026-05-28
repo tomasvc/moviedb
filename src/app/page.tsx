@@ -2,30 +2,18 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-// import { MovieItem } from "@/components/MovieItem";
 import { MovieItem } from "@components/MovieItemNew";
 import { HomeMovieHero } from "@/components/HomeMovieHero";
 import { Header } from "@/components/Header";
 import { useHeaderContext } from "@/contexts/headerContext";
-import { SideMenu } from "@/components/SideMenu";
-import { Video } from "@/components/Video";
-import { HomeHero } from "@/components/HomeHero";
-import "video.js/dist/video-js.css";
-import "videojs-youtube";
-import { XIcon } from "@/components/Icons";
-// import {
-//   fetchPopularMovies,
-//   fetchTrendingMovies,
-//   fetchUpcomingMovies,
-//   fetchMovieGenres,
-//   fetchMovieVideos,
-// } from "@/api/movies";
+import { MovieVideoModal } from "@/components/MovieVideoModal";
+import type { MovieVideo } from "@/lib/movieVideos";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Movie } from "@/types/api";
 
 type stateProps = {
   movies: any[];
-  videos: { id: number | null; results: any[] };
+  videos: { id: number | null; results: MovieVideo[] };
   selectedMovieIndex: number | null;
   rowLength: number;
   showVideo: boolean;
@@ -45,8 +33,6 @@ export default function Home() {
   });
   const { open, setOpen } = useHeaderContext();
   const searchParams = useSearchParams();
-  const playerRef = useRef(null);
-
   useEffect(() => {
     const list = searchParams.get("list");
     if (!list) return;
@@ -65,18 +51,6 @@ export default function Home() {
   }, [searchParams]);
 
   const loadedPagesRef = useRef(state.loadedPages);
-  const [videoJsOptions, setVideoJsOptions] = useState({
-    autoplay: false,
-    controls: true,
-    responsive: true,
-    fluid: true,
-    sources: [
-      {
-        src: "https://www.youtube.com/watch?v=WnYjuLNoP8E",
-        type: "video/youtube",
-      },
-    ],
-  });
   const { data: genresData } = useQuery({
     queryKey: ["genres", "movie"],
     queryFn: () =>
@@ -103,45 +77,14 @@ export default function Home() {
         "/api/tmdb/movies?type=movie-videos&id=" + movieId,
       ).then((res) => res.json());
 
-      // TMDB `/movie/{id}/videos` returns an object with `results` array.
-      // We only select YouTube trailers since the player is configured for YouTube tech.
       const results = Array.isArray(videos?.results) ? videos.results : [];
       setState((prevState) => ({
         ...prevState,
         videos: { id: movieId, results },
       }));
-
-      const youtubeTrailers = results.filter((v: any) => {
-        const site = typeof v?.site === "string" ? v.site.toLowerCase() : "";
-        return v?.type === "Trailer" && site === "youtube";
-      });
-
-      const chosen = youtubeTrailers[0] ?? results.find((v: any) => {
-        const site = typeof v?.site === "string" ? v.site.toLowerCase() : "";
-        return site === "youtube";
-      });
-
-      if (chosen?.key) {
-        setVideoJsOptions((prev) => ({
-          ...prev,
-          sources: [
-            {
-              src: `https://www.youtube.com/watch?v=${chosen.key}`,
-              type: "video/youtube",
-            },
-          ],
-        }));
-      }
     } catch (error) {
       console.error("Failed to fetch videos for movie", movieId, error);
     }
-  };
-
-  const handlePlayerReady = (player: any) => {
-    playerRef.current = player;
-
-    player.on("waiting", () => {});
-    player.on("dispose", () => {});
   };
 
   const { data, fetchNextPage, isFetchingNextPage, error } = useInfiniteQuery({
@@ -248,13 +191,10 @@ export default function Home() {
     moviesRef.current = movies;
   }, [movies]);
 
-  useEffect(() => {
-    if (state.showVideo) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-  }, [state.showVideo]);
+  const selectedMovie =
+    state.selectedMovieIndex !== null
+      ? movies[state.selectedMovieIndex]
+      : null;
 
   const rows = Array.from(
     { length: Math.ceil(movies.length / state.rowLength) },
@@ -337,26 +277,6 @@ export default function Home() {
                     disabled={isFetchingNextPage}
                     className="relative overflow-hidden bg-gradient-to-r from-[#0d0628] via-[#5937ef] to-[#0d0628] hover:via-[#6a49ff] disabled:opacity-40 disabled:text-white/80 text-white text-sm tracking-tighter font-semibold px-10 py-6 w-full uppercase transition shadow-xl shadow-purple-950/60 mb-2 mx-2 rounded-lg"
                   >
-                    <span
-                      className="absolute inset-0 pointer-events-none overflow-hidden rounded-lg"
-                      aria-hidden="true"
-                    >
-                      <span className="absolute inset-y-0 left-[3%] w-8 skew-x-12 bg-white/10" />
-                      <span className="absolute inset-y-0 left-[8%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
-                      <span className="absolute inset-y-0 left-[14%] w-6 skew-x-12 bg-white/10" />
-                      <span className="absolute inset-y-0 left-[20%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
-                      <span className="absolute inset-y-0 left-[27%] w-8 skew-x-12 bg-white/10" />
-                      <span className="absolute inset-y-0 left-[34%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
-                      <span className="absolute inset-y-0 left-[41%] w-6 skew-x-12 bg-white/10" />
-                      <span className="absolute inset-y-0 left-[48%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
-                      <span className="absolute inset-y-0 left-[55%] w-8 skew-x-12 bg-white/10" />
-                      <span className="absolute inset-y-0 left-[62%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
-                      <span className="absolute inset-y-0 left-[69%] w-6 skew-x-12 bg-white/10" />
-                      <span className="absolute inset-y-0 left-[76%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
-                      <span className="absolute inset-y-0 left-[83%] w-8 skew-x-12 bg-white/10" />
-                      <span className="absolute inset-y-0 left-[90%] w-3 skew-x-12 bg-white/5 hidden lg:block" />
-                      <span className="absolute inset-y-0 left-[95%] w-6 skew-x-12 bg-white/10" />
-                    </span>
                     <span className="relative z-10">
                       {isFetchingNextPage ? "Loading..." : "Show more"}
                     </span>
@@ -364,24 +284,28 @@ export default function Home() {
                 </div>
               )}
             </div>
-            {state.showVideo && (
-              <div className="fixed top-0 left-0 z-50 bg-black/90 backdrop-blur-sm flex justify-center items-center w-full h-screen animate-fadeInScaleUp transition-all">
-                <button
-                  onClick={() =>
-                    setState((prevState) => ({
-                      ...prevState,
-                      showVideo: false,
-                    }))
-                  }
-                  className="absolute top-5 right-5 z-10 text-white hover:bg-slate-500/20 active:bg-slate-500/30 transition active:transition-none ease-out duration-300 rounded-full p-2"
-                >
-                  <XIcon
-                    className="w-8 sm:w-12 h-auto text-gray-200"
-                    strokeWidth={0.5}
-                  />
-                </button>
-                <Video options={videoJsOptions} onReady={handlePlayerReady} />
-              </div>
+            {selectedMovie && (
+              <MovieVideoModal
+                open={state.showVideo}
+                onClose={() =>
+                  setState((prevState) => ({
+                    ...prevState,
+                    showVideo: false,
+                  }))
+                }
+                movieTitle={
+                  selectedMovie.title ||
+                  selectedMovie.name ||
+                  selectedMovie.original_title ||
+                  "Trailer"
+                }
+                backdropPath={selectedMovie.backdrop_path}
+                videos={
+                  state.videos.id === selectedMovie.id
+                    ? state.videos.results
+                    : []
+                }
+              />
             )}
           </div>
         </main>
