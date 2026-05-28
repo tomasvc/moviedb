@@ -15,7 +15,18 @@ type Props = {
 };
 
 const getResponsiveConfig = (width: number) => {
-  if (width < 640) {
+  if (width < 480) {
+    return {
+      slideWidth: 160,
+      slideHeight: 230,
+      spacing: 130,
+      curveDepth: 120,
+      curveAngle: 32,
+      perspective: 700,
+      containerHeight: 300,
+      dragSensitivity: 1.3,
+    };
+  } else if (width < 640) {
     return {
       slideWidth: 200,
       slideHeight: 280,

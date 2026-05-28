@@ -17,7 +17,7 @@ export const Review = ({ review, index }: { review: any; index: number }) => {
       )}
       <div className="mb-auto flex flex-col w-full">
         <div
-          className="mt-4 px-2 text-sm prose prose-invert max-h-[300px] overflow-y-auto"
+          className="mt-4 px-2 text-sm prose prose-invert max-h-[200px] sm:max-h-[300px] overflow-y-auto"
           dangerouslySetInnerHTML={{
             __html: review.content.replace(/(?:\r\n|\r|\n)/g, "<br>"),
           }}

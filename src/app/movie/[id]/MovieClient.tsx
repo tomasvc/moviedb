@@ -37,6 +37,16 @@ if (typeof window !== "undefined") {
   );
 }
 
+function getPosterHeight(width: number) {
+  if (width < 640) return 210;
+  if (width < 1024) return 300;
+  return 375;
+}
+
+function getPosterWidth(height: number) {
+  return Math.round((height * 2) / 3);
+}
+
 export function MovieClient({
   movieId,
   movie,
@@ -57,7 +67,7 @@ export function MovieClient({
   const router = useRouter();
 
   const { open, setOpen } = useHeaderContext();
-  const [isFixed, setIsFixed] = useState(false);
+  const [posterHeight, setPosterHeight] = useState(375);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLSpanElement>(null);
@@ -113,7 +123,12 @@ export function MovieClient({
   }, [carouselSlides]);
 
   useLayoutEffect(() => {
-    setIsFixed(window?.innerWidth > 500);
+    const updateViewport = () => {
+      setPosterHeight(getPosterHeight(window.innerWidth));
+    };
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
   }, []);
 
   const { contextSafe } = useGSAP(
@@ -136,7 +151,7 @@ export function MovieClient({
           imageMaskRef.current,
           { height: 0 },
           {
-            height: 375,
+            height: posterHeight,
             duration: 2,
             delay: 0.2,
             ease: "power3.out",
@@ -173,7 +188,7 @@ export function MovieClient({
     },
     {
       scope: containerRef,
-      dependencies: [],
+      dependencies: [posterHeight],
     },
   );
 
@@ -277,13 +292,13 @@ export function MovieClient({
     animateSlide("left");
   }, [carouselSlides.length, animateSlide]);
 
-  const backgroundAttachment = isFixed ? "fixed" : "scroll";
+  const posterWidth = getPosterWidth(posterHeight);
 
   return (
     <div
       key={movieId}
       ref={containerRef}
-      className="h-screen overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth animate-fadeIn"
+      className="h-[100dvh] overflow-y-auto overflow-x-hidden scroll-smooth animate-fadeIn md:h-screen md:snap-y md:snap-mandatory"
       id="movie-container"
       suppressHydrationWarning
     >
@@ -304,92 +319,109 @@ export function MovieClient({
         </div>
         <div className="fixed inset-0 bg-black/50 z-20 pointer-events-none" />
         {/* Hero Section */}
-        <section className="snap-section snap-start h-screen w-screen relative flex items-center">
-          <div className="section-content relative flex flex-col gap-2 z-30 w-full h-full mx-auto pb-12 px-6">
-            <div className="h-auto flex gap-6 mt-20">
-              <div
-                ref={imageMaskRef}
-                className="overflow-hidden h-0 flex-shrink-0"
-              >
-                <Image
-                  src={`https://image.tmdb.org/t/p/w400${movie?.poster_path}`}
-                  alt={
-                    movie?.title || movie?.name || movie?.original_title || ""
-                  }
-                  width={250}
-                  height={375}
-                  className="block h-[375px] min-h-[375px]"
-                />
-              </div>
-              <div className="my-4 text-white w-full lg:w-2/3 flex flex-col justify-between">
-                <div>
-                  <h2 className="2xl:text-xl italic text-slate-300 max-w-xs">
-                    {movie?.tagline}
-                  </h2>
-                  <p
-                    ref={imageTextRef}
-                    className="mt-4 font-light leading-6 lg:leading-7 text-sm lg:text-base max-w-xs"
-                  >
-                    {movie?.overview}
-                  </p>
+        <section className="snap-section md:snap-start min-h-[100dvh] md:min-h-0 md:h-screen w-full max-w-full relative flex items-start md:items-center">
+          <div className="section-content relative flex flex-col gap-3 z-30 w-full min-h-[100dvh] md:h-full mx-auto pb-8 md:pb-12 px-4 sm:px-6">
+            <div className="flex items-start justify-between gap-3 pt-20 sm:pt-24 md:pt-20">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 flex-1 min-w-0">
+                <div
+                  ref={imageMaskRef}
+                  className="overflow-hidden h-0 flex-shrink-0 mx-auto sm:mx-0"
+                >
+                  <Image
+                    src={`https://image.tmdb.org/t/p/w400${movie?.poster_path}`}
+                    alt={
+                      movie?.title ||
+                      movie?.name ||
+                      movie?.original_title ||
+                      ""
+                    }
+                    width={posterWidth}
+                    height={posterHeight}
+                    sizes="(max-width: 640px) 140px, (max-width: 1024px) 200px, 250px"
+                    className="block w-auto"
+                    style={{
+                      height: posterHeight,
+                      minHeight: posterHeight,
+                    }}
+                  />
+                </div>
+                <div className="text-white w-full sm:flex-1 lg:w-2/3 flex flex-col justify-between min-w-0">
+                  <div>
+                    {movie?.tagline && (
+                      <h2 className="text-sm sm:text-base 2xl:text-xl italic text-slate-300">
+                        {movie?.tagline}
+                      </h2>
+                    )}
+                    <p
+                      ref={imageTextRef}
+                      className="mt-2 sm:mt-4 font-light leading-relaxed text-sm sm:text-base lg:leading-7 line-clamp-6 sm:line-clamp-none"
+                    >
+                      {movie?.overview}
+                    </p>
+                  </div>
                 </div>
               </div>
+              <div className="flex flex-col items-center flex-shrink-0 pt-1">
+                <Image src={TMDBLogo} alt="TMDB Logo" width={32} height={32} className="sm:w-10 sm:h-10" />
+                <p className="text-white text-xs sm:text-sm font-bold mt-1">
+                  {movie?.vote_average?.toFixed(1)} / 10
+                </p>
+                <p className="text-white text-[10px] sm:text-xs">
+                  {movie?.vote_count}
+                </p>
+              </div>
             </div>
-            <div className="flex flex-col items-center absolute top-20 right-8">
-              <Image src={TMDBLogo} alt="TMDB Logo" width={40} height={40} />
-              <p className="text-white text-sm font-bold mt-1">
-                {movie?.vote_average?.toFixed(1)} / 10
-              </p>
-              <p className="text-white text-xs">{movie?.vote_count}</p>
-            </div>
-            <div className="relative w-full mt-32">
-              <h1 className="text-white font-bold uppercase text-3xl lg:text-[70px] flex items-center justify-center gap-4 mx-auto select-none">
+            <div className="relative w-full mt-6 sm:mt-12 md:mt-24 lg:mt-32 px-1">
+              <h1 className="text-white font-bold uppercase text-2xl sm:text-3xl md:text-5xl lg:text-[70px] text-center leading-tight mx-auto select-none break-words">
                 {movie?.title || movie?.name || movie?.original_title}
               </h1>
               <span
                 ref={titleRef}
-                className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-white/5 font-black uppercase text-[300px] whitespace-nowrap select-none"
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 text-white/5 font-black uppercase text-[4.5rem] sm:text-[8rem] md:text-[12rem] lg:text-[300px] whitespace-nowrap select-none max-w-[100vw] overflow-hidden"
               >
                 {movie?.title || movie?.name || movie?.original_title}
               </span>
             </div>
-            <div className="flex gap-4 justify-center mt-6 z-50">
+            <div className="flex gap-3 sm:gap-4 justify-center mt-4 sm:mt-6 z-50">
               <button
+                type="button"
                 onClick={handlePrev}
-                className="prev-btn text-white px-4 py-2 flex gap-2 items-center"
+                className="prev-btn text-white px-3 sm:px-4 py-2 flex gap-2 items-center text-sm sm:text-base min-h-[44px]"
               >
-                <MoveLeft />
+                <MoveLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 prev
               </button>
               <button
+                type="button"
                 onClick={handleNext}
-                className="next-btn text-white px-4 py-2 flex gap-2 items-center"
+                className="next-btn text-white px-3 sm:px-4 py-2 flex gap-2 items-center text-sm sm:text-base min-h-[44px]"
               >
                 next
-                <MoveRight />
+                <MoveRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </div>
-            <div className="fixed bottom-10 left-6 w-full mt-auto">
+            <div className="relative md:fixed md:bottom-10 md:left-6 w-full mt-6 md:mt-auto pr-4 md:pr-8">
               <p
-                className="font-medium text-white text-2xl uppercase tracking-tighter"
+                className="font-medium text-white text-xl sm:text-2xl uppercase tracking-tighter"
                 suppressHydrationWarning
               >
                 {moment(movie?.release_date).format("YYYY")}
               </p>
-              <div className="flex items-center flex-row flex-wrap gap-2 mt-4 text-xs text-[#adff4f]">
+              <div className="flex items-center flex-row flex-wrap gap-x-2 gap-y-1 mt-3 sm:mt-4 text-xs text-[#adff4f]">
                 {movie?.production_companies
                   ?.filter((item: any) => item.logo_path)
                   ?.map((item: any) => item.name)
                   .join(" / ") && (
-                  <span>
+                  <span className="line-clamp-2">
                     {movie?.production_companies
                       ?.filter((item: any) => item.logo_path)
                       ?.map((item: any) => item.name)
                       .join(" / ")}
                   </span>
                 )}
-                <span className="w-[50px] h-[1px] bg-white mx-1"></span>
-                <span className="text-white text-xs">
+                <span className="hidden sm:inline w-[50px] h-px bg-white mx-1 shrink-0" />
+                <span className="text-white text-xs w-full sm:w-auto">
                   Directed by{" "}
                   <span className="text-[#adff4f]">
                     {credits?.crew
@@ -399,7 +431,7 @@ export function MovieClient({
                   </span>
                 </span>
               </div>
-              <div className="flex items-center flex-row flex-wrap gap-6 mt-2">
+              <div className="flex items-center flex-row flex-wrap gap-x-4 gap-y-1 sm:gap-6 mt-2">
                 {credits?.cast?.slice(0, 5).map((item: any, index: number) => (
                   <span key={index} className="text-white text-xs">
                     {item.name}
@@ -411,8 +443,8 @@ export function MovieClient({
         </section>
 
         {/* Cast Section */}
-        <section className="snap-section snap-start min-h-screen w-screen relative flex items-center z-50">
-          <div className="section-content w-full mx-auto px-6 py-16">
+        <section className="snap-section md:snap-start min-h-[80dvh] md:min-h-screen w-full max-w-full relative flex items-center z-50 py-8 md:py-0">
+          <div className="section-content w-full mx-auto px-2 sm:px-6 py-8 sm:py-12 md:py-16">
             {/* <div
               ref={castItemsContainerRef}
               className="flex gap-2 xl:gap-4 overflow-auto py-4"
@@ -460,107 +492,110 @@ export function MovieClient({
         </section>
 
         {/* Reviews Section */}
-        <section className="snap-section snap-start min-h-screen w-screen relative flex items-center z-30">
-          {reviews?.length > 0 && (
+        <section className="snap-section md:snap-start min-h-[60dvh] md:min-h-screen w-full max-w-full relative flex items-center z-30">
+          {reviews?.length > 0 ? (
             <Carousel2D>
-              {reviews?.map((review: any, index: number) => {
-                return (
-                  <div
-                    key={index}
-                    className="snap-center shrink-0 w-[min(400px,85vw)]"
-                  >
-                    <Review review={review} index={index} />
-                  </div>
-                );
-              })}
+              {reviews?.map((review: any, index: number) => (
+                <Review key={index} review={review} index={index} />
+              ))}
             </Carousel2D>
+          ) : (
+            <div className="section-content w-full px-4 sm:px-6 py-12 text-white/60 text-sm">
+              No reviews yet.
+            </div>
           )}
         </section>
 
         {/* Recommendations Section */}
-        <section className="snap-section snap-start min-h-screen w-screen relative flex items-center z-30">
+        <section className="snap-section md:snap-start min-h-[80dvh] md:min-h-screen w-full max-w-full relative flex items-start md:items-center z-30 py-8 md:py-0">
           <div className="section-content w-full mx-auto">
-            <div className="flex overflow-x-scroll pb-4">
-              {recommendations?.map((item: any, index: number) => {
-                return (
-                  <Link
-                    href={`/movie/${item.id}`}
-                    className="min-w-[150px]"
-                    key={index}
-                    prefetch={true}
-                  >
-                    <MovieItem movie={item} />
-                  </Link>
-                );
-              })}
-            </div>
+            {recommendations?.length > 0 && (
+              <>
+                <p className="font-semibold uppercase tracking-wide text-white text-sm px-4 sm:px-6 mb-3">
+                  More like this
+                </p>
+                <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-4 px-4 sm:px-6 snap-x snap-mandatory touch-pan-x">
+                  {recommendations?.map((item: any, index: number) => (
+                    <Link
+                      href={`/movie/${item.id}`}
+                      className="min-w-[120px] sm:min-w-[150px] snap-start shrink-0"
+                      key={index}
+                      prefetch={true}
+                    >
+                      <MovieItem movie={item} />
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Movie Details */}
-            <div className="flex flex-col gap-8">
-              <div className="mt-8 mx-6">
-                <div className="flex gap-3 mb-2">
-                  <p className="font-semibold uppercase tracking-wide text-white text-sm">
+            <div className="flex flex-col gap-6 sm:gap-8 mt-6 sm:mt-8">
+              {keywords?.length > 0 && (
+                <div className="mx-4 sm:mx-6">
+                  <p className="font-semibold uppercase tracking-wide text-white text-sm mb-2">
                     Keywords
                   </p>
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 max-w-[800px]">
-                  {keywords?.map((item: any, index: number) => {
-                    return (
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 sm:gap-x-4 max-w-[800px]">
+                    {keywords?.map((item: any, index: number) => (
                       <button
                         key={index}
+                        type="button"
                         onClick={() => router.push(`/keyword/${item.id}`)}
-                        className="text-xs text-white w-fit"
+                        className="text-xs text-white w-fit min-h-[44px] flex items-center"
                       >
                         {item.name}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-12 text-sm text-white mx-6">
+              )}
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-4 sm:gap-8 lg:gap-12 text-sm text-white mx-4 sm:mx-6">
                 <div>
-                  <label className="font-semibold text-sm uppercase">
+                  <label className="font-semibold text-xs sm:text-sm uppercase">
                     Status
                   </label>
-                  <p className="text-xs pt-2">{movie?.status}</p>
+                  <p className="text-xs pt-1 sm:pt-2">{movie?.status}</p>
                 </div>
                 {movie?.runtime && movie?.runtime > 0 && (
                   <div>
-                    <label className="font-semibold text-sm uppercase">
+                    <label className="font-semibold text-xs sm:text-sm uppercase">
                       Runtime
                     </label>
-                    <p className="text-xs pt-2">
+                    <p className="text-xs pt-1 sm:pt-2">
                       {Math.floor(movie?.runtime / 60)}h {movie?.runtime % 60}m
                     </p>
                   </div>
                 )}
 
                 <div>
-                  <label className="font-semibold text-sm uppercase">
+                  <label className="font-semibold text-xs sm:text-sm uppercase">
                     Budget
                   </label>
-                  <p className="text-xs pt-2">
+                  <p className="text-xs pt-1 sm:pt-2 break-words">
                     {movie?.budget && movie?.budget > 0
                       ? `$${movie?.budget.toLocaleString()}`
                       : "Not available"}
                   </p>
                 </div>
                 <div>
-                  <label className="font-semibold text-sm uppercase">
+                  <label className="font-semibold text-xs sm:text-sm uppercase">
                     Revenue
                   </label>
-                  <p className="text-xs pt-2">
+                  <p className="text-xs pt-1 sm:pt-2 break-words">
                     {movie?.revenue && movie?.revenue > 0
                       ? `$${movie?.revenue.toLocaleString()}`
                       : "Not available"}
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col gap-2 text-sm text-white mx-6">
-                <label className="font-semibold text-sm uppercase">
+              <div className="flex flex-col gap-1 sm:gap-2 text-sm text-white mx-4 sm:mx-6 pb-8 md:pb-12">
+                <label className="font-semibold text-xs sm:text-sm uppercase">
                   Original language
                 </label>
-                <p className="text-xs">{movie?.spoken_languages?.[0]?.name}</p>
+                <p className="text-xs">
+                  {movie?.spoken_languages?.[0]?.name}
+                </p>
               </div>
             </div>
           </div>
